@@ -1,0 +1,25 @@
+# lambda calculus
+
+%prefix "lc"
+%value "struct lambdaexpr *"
+%common {
+#include "lambdaexpr.h"
+}
+
+term        <- (t:application / t:abstraction) {$$=t;}
+abstraction <- LAMBDA i:ID DOT t:term {$$=mknode(ABSTR); if(!$$) /**/; $$->abstr.id=i; $$->abstr.expr=t;}
+application <- S:atom {$$=S;} (t:atom {struct lambdaexpr *le=mknode(APPL);
+                                       if (!le) /**/;
+                                       le->appl.lhs=$$;
+                                       le->appl.rhs=t;
+                                       $$=le;})*
+atom        <- id:ID {$$=id;} / LP t:term RP {$$=t;}
+LAMBDA      <- _ '\\' _
+ID          <- _ <[A-Za-z_][A-Za-z0-9]*> _ {$$=mknode(TERM);
+                                            $$->term=(char *)malloc((strlen($1)+1)*sizeof(char));
+                                            if(!$$->term) /**/;
+                                            strcpy($$->term,$1); $$->term[strlen($1)-1]='\0';}
+DOT         <- _ '.' _
+LP          <- _ '(' _
+RP          <- _ ')' _
+_           <- [\n\t\r ]*
