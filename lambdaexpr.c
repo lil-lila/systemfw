@@ -14,8 +14,9 @@ struct lambdaexpr *mknode(enum nodetype t) {
 			le->abstr.id=NULL;
 			le->abstr.expr=NULL; break;
 		case TERM:
-			le->term=NULL; break;
-		default: return NULL;
+			le->term.s=NULL;
+			le->term.index=-1; break;
+		default: {free(le); return NULL;}
 	}
 	le->type=t;
 	return le;
@@ -33,7 +34,7 @@ int destroynode(struct lambdaexpr *le) {
 			destroynode(le->abstr.expr);
 			break;
 		case TERM:
-			if (le->term) free(le->term);
+			if (le->term.s) free(le->term.s);
 			break;
 		default: break;
 	}

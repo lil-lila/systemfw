@@ -3,6 +3,11 @@
 
 struct lambdaexpr;
 
+struct terminal {
+	/*unsigned */int index; // De Bruijn index
+	char *s;
+};
+
 struct application {
 	struct lambdaexpr *lhs;
 	struct lambdaexpr *rhs;
@@ -20,7 +25,7 @@ struct lambdaexpr {
 	union {
 		struct application appl;
 		struct abstraction abstr;
-		char *term;
+		struct terminal term;
 	};
 };
 

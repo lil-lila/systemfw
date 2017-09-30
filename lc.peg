@@ -2,12 +2,14 @@
 
 %prefix "lc"
 %value "struct lambdaexpr *"
+%auxil "struct ctx *"
 %common {
 #include "lambdaexpr.h"
+#include "debruijn.h"
 }
 
 term        <- (t:application / t:abstraction) {$$=t;}
-abstraction <- LAMBDA i:ID DOT t:term {$$=mknode(ABSTR); if(!$$) /**/; $$->abstr.id=i; $$->abstr.expr=t;}
+abstraction <- LAMBDA i:ID {push(auxil,i->term.s);} DOT t:term {$$=mknode(ABSTR); if(!$$) /**/; $$->abstr.id=i; $$->abstr.expr=t;}
 application <- S:atom {$$=S;} (t:atom {struct lambdaexpr *le=mknode(APPL);
                                        if (!le) /**/;
                                        le->appl.lhs=$$;
@@ -16,9 +18,11 @@ application <- S:atom {$$=S;} (t:atom {struct lambdaexpr *le=mknode(APPL);
 atom        <- id:ID {$$=id;} / LP t:term RP {$$=t;}
 LAMBDA      <- _ '\\' _
 ID          <- _ <[A-Za-z_][A-Za-z0-9]*> _ {$$=mknode(TERM);
-                                            $$->term=(char *)malloc((strlen($1)+1)*sizeof(char));
-                                            if(!$$->term) /**/;
-                                            strcpy($$->term,$1); $$->term[strlen($1)-1]='\0';}
+                                            $$->term.s=(char *)malloc((strlen($1)+1)*sizeof(char));
+                                            if(!$$->term.s) /**/;
+                                            strcpy($$->term.s,$1); $$->term.s[strlen($1)-1]='\0';
+                                            int i;
+                                            $$->term.index=indexof(auxil,$1);}
 DOT         <- _ '.' _
 LP          <- _ '(' _
 RP          <- _ ')' _
