@@ -22,7 +22,6 @@ struct lambdaexpr *mknode(enum nodetype t) {
 }
 
 int destroynode(struct lambdaexpr *le) {
-	printf("x:%d\n",le->type);
 	if (!le) return 1;
 	switch (le->type) {
 		case APPL:
@@ -36,7 +35,7 @@ int destroynode(struct lambdaexpr *le) {
 		case TERM:
 			if (le->term) free(le->term);
 			break;
-		default: return 1;
+		default: break;
 	}
 	free(le);
 	return 0;
