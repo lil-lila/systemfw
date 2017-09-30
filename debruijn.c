@@ -24,6 +24,10 @@ int push(struct ctx *s,const char *const c) {
 	return s->count-1;
 }
 
+int pop(struct ctx *s) {
+	s->terms=(char const **)realloc(s->terms,--s->count*sizeof(char *));
+}
+
 int indexof(const struct ctx *const s,const char *const t) {
 	if (!s->count) return -1;
 	for(unsigned int i=0;i<s->count;i++) if (!strcmp(s->terms[i],t)) return i;
