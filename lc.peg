@@ -9,19 +9,19 @@
 }
 
 term        <- (t:application / t:abstraction) {$$=t;}
-abstraction <- LAMBDA i:ID {push(auxil,i->term.s);} DOT t:term {pop(auxil); $$=mknode(ABSTR); if(!$$) /**/; $$->abstr.id=i; $$->abstr.expr=t;}
+abstraction <- LAMBDA i:ID {push(auxil,i->term.s);} DOT t:term {pop(auxil); $$=mknode(ABSTR); if(!$$) /**/; $$->abstr.id=i->term.s; free(i); $$->abstr.expr=t;}
 application <- S:atom {$$=S;} (t:atom {struct lambdaexpr *le=mknode(APPL);
                                        if (!le) /**/;
                                        le->appl.lhs=$$;
                                        le->appl.rhs=t;
                                        $$=le;})*
 atom        <- id:ID {$$=id;} / LP t:term RP {$$=t;}
-LAMBDA      <- _ '\\' _
 ID          <- _ <[A-Za-z_][A-Za-z0-9]*> _ {$$=mknode(TERM);
                                             $$->term.s=(char *)malloc((strlen($1)+1)*sizeof(char));
                                             if(!$$->term.s) /**/;
                                             strcpy($$->term.s,$1); $$->term.s[strlen($1)]='\0';
                                             $$->term.index=indexof(auxil,$1);}
+LAMBDA      <- _ '\\' _
 DOT         <- _ '.' _
 LP          <- _ '(' _
 RP          <- _ ')' _

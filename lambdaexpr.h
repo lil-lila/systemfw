@@ -14,7 +14,7 @@ struct application {
 };
 
 struct abstraction {
-	struct lambdaexpr *id;
+	char *id;//struct lambdaexpr *id;
 	struct lambdaexpr *expr;
 };
 
