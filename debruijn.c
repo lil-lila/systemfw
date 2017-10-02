@@ -30,7 +30,7 @@ int pop(struct ctx *s) {
 
 int indexof(const struct ctx *const s,const char *const t) {
 	if (!s->count) return 0;
-	for(unsigned int i=0;i<s->count;i++) if (!strcmp(s->terms[i],t)) return s->count-i;
+	for(int i=s->count-1;i>=0;i--) if (!strcmp(s->terms[i],t)) return s->count-i;
 	return 0;
 }
 
