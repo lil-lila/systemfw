@@ -3,6 +3,7 @@
 #include "lc.h"
 #include "lambdaexpr.h"
 #include "debruijn.h"
+#include "evaluate.h"
 
 int main() {
 	struct ctx c=ctx_init();

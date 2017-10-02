@@ -6,7 +6,7 @@
 struct lambdaexpr *mknode(enum nodetype t) {
 	struct lambdaexpr *le=(struct lambdaexpr *)malloc(sizeof(struct lambdaexpr));
 	if (!le) return NULL;
-	switch(t) {
+	switch(le->type=t) {
 		case APPL:
 			le->appl.lhs=NULL;
 			le->appl.rhs=NULL; break;
@@ -18,7 +18,6 @@ struct lambdaexpr *mknode(enum nodetype t) {
 			le->term.index=0; break;
 		default: {free(le); return NULL;}
 	}
-	le->type=t;
 	return le;
 }
 
