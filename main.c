@@ -10,6 +10,8 @@ int main() {
 	lc_context_t *p=lc_create(&c);
 	struct lambdaexpr *l;
 	lc_parse(p,&l);
+	printnode(l);
+	substitute(l->appl.lhs,l->appl.rhs,1);
 	destroynode(l);
 	lc_destroy(p);
 	ctx_destroy(c);
