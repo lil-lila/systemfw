@@ -39,7 +39,7 @@ struct lambdaexpr *substitute(struct lambdaexpr *source,struct lambdaexpr *by,in
 	switch(source->type) {
 		case TERM:;
 			if (source->term.index==index) result=copytree(by,index-1); //increase values of bounded variables by index
-			else result=copytree(source,index);
+			else result=copytree(source,0);
 			break;
 		case APPL:;
 			struct lambdaexpr *nlhs=substitute(source->appl.lhs,by,index);

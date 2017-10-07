@@ -8,11 +8,15 @@
 int main() {
 	struct ctx c=ctx_init();
 	lc_context_t *p=lc_create(&c);
-	struct lambdaexpr *l;
+	struct lambdaexpr *l,*m;
 	lc_parse(p,&l);
 	printnode(l);
-	substitute(l->appl.lhs,l->appl.rhs,1);
+	putchar('\n');
+	m=substitute(l->appl.lhs,l->appl.rhs,0);
+	printnode(m);
+	putchar('\n');
 	destroynode(l);
+	destroynode(m);
 	lc_destroy(p);
 	ctx_destroy(c);
 	return 0;
