@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "lambdaexpr.h"
 
-struct lambdaexpr *copytree(const struct lambdaexpr *const orig,const int subst) {
+static struct lambdaexpr *copytree(const struct lambdaexpr *const orig,const int subst) {
 	if (!orig) return NULL;
 	struct lambdaexpr *copy=mknode(orig->type);
 	if (!copy) return NULL;
@@ -33,7 +33,7 @@ struct lambdaexpr *copytree(const struct lambdaexpr *const orig,const int subst)
 	return copy;
 }
 
-struct lambdaexpr *substitute(struct lambdaexpr *source,struct lambdaexpr *by,int index) {
+static struct lambdaexpr *substitute(struct lambdaexpr *source,struct lambdaexpr *by,int index) {
 	if (!source || !by/* || source->type!=ABSTR*/) return NULL;
 	struct lambdaexpr *result=NULL;//=source->abstr.expr;
 	switch(source->type) {
@@ -59,16 +59,36 @@ struct lambdaexpr *substitute(struct lambdaexpr *source,struct lambdaexpr *by,in
 	return result;
 }
 
-struct lambdaexpr *evaluate(struct lambdaexpr *ast) {
-	if (ast && ast->type==APPL) {
-		if ((ast->appl.lhs && ast->appl.lhs->type==ABSTR) && (ast->appl.rhs && ast->appl.rhs->type==ABSTR)) {
-			//ast=substitute(ast->rhs,ast->lhs.body);
-		} else if (ast->appl.lhs && ast->appl.lhs->type==ABSTR) {
-			//ast->rhs=evaluate(ast->rhs);
+static struct lambdaexpr *seval(struct lambdaexpr *l) {
+	struct lambdaexpr *m=NULL,*n=NULL;
+	if (l && l->type==APPL) {
+		if ((l->appl.lhs && l->appl.lhs->type==ABSTR) && (l->appl.rhs && (l->appl.rhs->type==ABSTR || l->appl.rhs->type==TERM)))
+			m=substitute(l->appl.lhs->abstr.expr,l->appl.rhs,1);
+		else if (l->appl.lhs->type==APPL) {
+			n=seval(l->appl.lhs);
+			m=mknode(APPL);
+			m->appl.lhs=n;
+			m->appl.rhs=copytree(l->appl.rhs,0);
+			n=NULL;
 		} else {
-			//ast->lhs=evaluate(ast->lhs);
+			n=seval(l->appl.rhs);
+			m=mknode(APPL);
+			m->appl.rhs=n;
+			m->appl.lhs=copytree(l->appl.lhs,0);
+			n=NULL;
 		}
-	} else return ast;
+	} else return copytree(l,0);
+	return m;
+}
+
+struct lambdaexpr *eval(struct lambdaexpr *l) {
+	struct lambdaexpr *m=l,*n=NULL;
+	do {
+		n=m;
+		m=seval(m);
+		destroynode(n);
+	} while (m->type!=TERM && m->type!=ABSTR);
+	return m;
 }
 
 void printnode(struct lambdaexpr *ast) {
@@ -91,3 +111,5 @@ void printnode(struct lambdaexpr *ast) {
 		default: return;
 	}
 }
+
+

@@ -12,10 +12,9 @@ int main() {
 	lc_parse(p,&l);
 	printnode(l);
 	putchar('\n');
-	m=substitute(l->appl.lhs,l->appl.rhs,0);
+	m=eval(l);
 	printnode(m);
 	putchar('\n');
-	destroynode(l);
 	destroynode(m);
 	lc_destroy(p);
 	ctx_destroy(c);
