@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include "lambdaexpr.h"
 
@@ -38,21 +39,23 @@ static struct lambdaexpr *substitute(struct lambdaexpr *source,struct lambdaexpr
 	struct lambdaexpr *result=NULL;//=source->abstr.expr;
 	switch(source->type) {
 		case TERM:;
-			if (source->term.index==index) result=copytree(by,index-1); //increase values of bounded variables by index
-			else result=copytree(source,0);
+			if (source->term.index==index) {result=copytree(by,index-1);destroynode(source);} //increase values of bounded variables by index
+			else result=source;//copytree(source,0);
 			break;
 		case APPL:;
 			struct lambdaexpr *nlhs=substitute(source->appl.lhs,by,index);
 			struct lambdaexpr *nrhs=substitute(source->appl.rhs,by,index);
-			result=mknode(APPL);
-			result->appl.lhs=nlhs;
-			result->appl.rhs=nrhs;
+			//result=mknode(APPL);
+			source->appl.lhs=nlhs;
+			source->appl.rhs=nrhs;
+			result=source;
 			break;
 		case ABSTR:;
 			struct lambdaexpr *nexpr=substitute(source->abstr.expr,by,index+1);
-			result=mknode(ABSTR);
-			result->abstr.id=strdup(source->abstr.id);
-			result->abstr.expr=nexpr;
+			//result=mknode(ABSTR);
+			//result->abstr.id=strdup(source->abstr.id);
+			source->abstr.expr=nexpr;
+			result=source;
 			break;
 		default: return NULL;
 	}
@@ -60,34 +63,32 @@ static struct lambdaexpr *substitute(struct lambdaexpr *source,struct lambdaexpr
 }
 
 static struct lambdaexpr *seval(struct lambdaexpr *l) {
-	struct lambdaexpr *m=NULL,*n=NULL;
+	struct lambdaexpr *m=l;
 	if (l && l->type==APPL) {
-		if ((l->appl.lhs && l->appl.lhs->type==ABSTR) && (l->appl.rhs && (l->appl.rhs->type==ABSTR || l->appl.rhs->type==TERM)))
+		if ((l->appl.lhs && l->appl.lhs->type==ABSTR) && (l->appl.rhs && (l->appl.rhs->type==ABSTR || l->appl.rhs->type==TERM))) {
 			m=substitute(l->appl.lhs->abstr.expr,l->appl.rhs,1);
-		else if (l->appl.lhs->type==APPL) {
-			n=seval(l->appl.lhs);
-			m=mknode(APPL);
-			m->appl.lhs=n;
-			m->appl.rhs=copytree(l->appl.rhs,0);
-			n=NULL;
-		} else {
-			n=seval(l->appl.rhs);
-			m=mknode(APPL);
-			m->appl.rhs=n;
-			m->appl.lhs=copytree(l->appl.lhs,0);
-			n=NULL;
-		}
-	} else return copytree(l,0);
+			l->appl.lhs->abstr.expr=NULL;
+			destroynode(l);
+		} else if (l->appl.lhs->type==APPL) {
+			m->appl.lhs=seval(m->appl.lhs);
+		} else m->appl.rhs=seval(m->appl.rhs);
+	} else return l;
 	return m;
+}
+
+bool isval(struct lambdaexpr *);
+bool isnval(struct lambdaexpr *m) {
+	return (m->type==TERM || (m->type==APPL && (m->appl.lhs && isnval(m->appl.lhs) && m->appl.rhs && isval(m->appl.rhs))));
+}
+
+bool isval(struct lambdaexpr *m) {
+	return (m && (m->type==ABSTR || isnval(m)));
 }
 
 struct lambdaexpr *eval(struct lambdaexpr *l) {
 	struct lambdaexpr *m=l,*n=NULL;
-	do {
-		n=m;
-		m=seval(m);
-		destroynode(n);
-	} while (m->type!=TERM && m->type!=ABSTR);
+	do m=seval(m);
+	while (!isval(m));
 	return m;
 }
 
@@ -106,7 +107,7 @@ void printnode(struct lambdaexpr *ast) {
 			printnode(ast->abstr.expr);
 			break;
 		case TERM:
-			printf("%s(%d) ",ast->term.s,ast->term.index);
+			printf("%s(%d)",ast->term.s,ast->term.index);
 			break;
 		default: return;
 	}
