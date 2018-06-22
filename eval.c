@@ -27,19 +27,29 @@ struct lambda *substitute(struct lambda *where,struct lambda *with,int atindex) 
 }
 
 bool reducible(struct lambda *ast) {
-    if (ast->t==LAMBDA_ABSTR || ast->t==LAMBDA_ATOM) return false;
-    if (ast->appl.lhs->t==LAMBDA_ATOM && ast->appl.rhs->t==LAMBDA_ATOM) return false;
-    if (ast->appl.lhs->t==LAMBDA_ABSTR) return true;
-    if ((reducible(ast->appl.lhs) || reducible(ast->appl.rhs))) return true;
+    /*if ((ast->t==LAMBDA_ABSTR && !reducible(ast->abstr.expr)) || ast->t==LAMBDA_ATOM) return false;
+    if (ast->t==LAMBDA_APPL && ast->appl.lhs->t==LAMBDA_ATOM && ast->appl.rhs->t==LAMBDA_ATOM) return false;
+    if (ast->t==LAMBDA_APPL && ast->appl.lhs->t==LAMBDA_ABSTR) return true;
+    if (ast->t==LAMBDA_APPL && (reducible(ast->appl.lhs) || reducible(ast->appl.rhs))) return true;*/
+    if (ast->t==LAMBDA_ATOM) return false;
+    else if (ast->t==LAMBDA_APPL) {
+        if (ast->appl.lhs->t==LAMBDA_ABSTR) return true;
+        else return reducible(ast->appl.lhs) || reducible(ast->appl.rhs);
+    } else {
+        return reducible(ast->abstr.expr);
+    }
     return false;
 }
+
+bool isValue(struct lambda *l) {return l && l->t==LAMBDA_ABSTR;}
 
 struct lambda *eval(struct lambda *ast) {
     if (!ast) return 0;
     while (reducible(ast)) {
+        printf("iteration:\n");
+        printnode(ast); putchar('\n');
         if (ast->t==LAMBDA_APPL) {
-            if (ast->appl.lhs && ast->appl.lhs->t==LAMBDA_ABSTR
-             && (ast->appl.rhs && ast->appl.rhs->t==LAMBDA_ABSTR ||  ast->appl.rhs->t==LAMBDA_ATOM)) {
+            if (ast->appl.lhs && ast->appl.lhs->t==LAMBDA_ABSTR) {
                 struct lambda *lhs_expr=ast->appl.lhs->abstr.expr;
                 struct lambda *rhs=ast->appl.rhs;
                 free(ast->appl.lhs->abstr.v);
@@ -51,6 +61,8 @@ struct lambda *eval(struct lambda *ast) {
                 ast->appl.lhs = eval(ast->appl.lhs);
                 ast->appl.rhs = eval(ast->appl.rhs);
             }
+        } else if (ast->t==LAMBDA_ABSTR) {
+            ast->abstr.expr=eval(ast->abstr.expr);
         }
     }
     return ast;

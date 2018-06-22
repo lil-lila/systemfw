@@ -51,16 +51,18 @@ void printnode(struct lambda *lc) {
             printf("%s_%d",lc->atom.s,lc->atom.index);
             break;
         case LAMBDA_ABSTR:
-            printf("\\%s.(",lc->abstr.v);
+            printf("\\%s.",lc->abstr.v);
             printnode(lc->abstr.expr);
-            putchar(')');
+            //putchar(')');
             break;
         case LAMBDA_APPL:
-            putchar('(');
+            if (lc->appl.lhs->t==LAMBDA_ABSTR) putchar('(');
             printnode(lc->appl.lhs);
-            printf(") (");
+            if (lc->appl.lhs->t==LAMBDA_ABSTR) putchar(')');
+            putchar(' ');
+            if (lc->appl.rhs->t!=LAMBDA_ATOM) putchar('(');
             printnode(lc->appl.rhs);
-            putchar(')');
+            if (lc->appl.rhs->t!=LAMBDA_ATOM) putchar(')');
             break;
         default:
             break;

@@ -24,7 +24,7 @@ int ctx_push(struct ctx *s,const char *const c) {
 	return s->count-1;
 }
 
-int ctx_pop(struct ctx *s) {
+void ctx_pop(struct ctx *s) {
 	s->terms=(char const **)realloc(s->terms,--s->count*sizeof(char *));
 }
 
