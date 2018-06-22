@@ -1,22 +1,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "lc.h"
-#include "lambdaexpr.h"
+#include "lambda.h"
 #include "debruijn.h"
-#include "evaluate.h"
+#include "eval.h"
 
 int main() {
 	struct ctx c=ctx_init();
 	lc_context_t *p=lc_create(&c);
-	struct lambdaexpr *l,*m;
+	struct lambda *l;
 	lc_parse(p,&l);
-	printnode(l);
-	putchar('\n');
-	m=eval(l);
-	printnode(m);
-	putchar('\n');
-	destroynode(m);
-	lc_destroy(p);
 	ctx_destroy(c);
+	
+    printnode(l);
+	putchar('\n');
+	putchar('\n');
+    printf("is:%d\n",reducible(l));
+    struct lambda *m=dupnode(l);
+    m=eval(m);
+    printf("m:");
+    printnode(m);
+	putchar('\n');
+    destroynode(m);
+    destroynode(l);
+	lc_destroy(p);
 	return 0;
 }

@@ -14,7 +14,7 @@ int ctx_destroy(struct ctx s) {
 	return 0;
 }
 
-int push(struct ctx *s,const char *const c) {
+int ctx_push(struct ctx *s,const char *const c) {
 	if (!s->count || !s->terms) s->terms=(char const **)malloc((s->count=1)*sizeof(char *));
 	else s->terms=(char const **)realloc(s->terms,++s->count*sizeof(char *));
 	if (!s->terms) return -1;
@@ -24,7 +24,7 @@ int push(struct ctx *s,const char *const c) {
 	return s->count-1;
 }
 
-int pop(struct ctx *s) {
+int ctx_pop(struct ctx *s) {
 	s->terms=(char const **)realloc(s->terms,--s->count*sizeof(char *));
 }
 

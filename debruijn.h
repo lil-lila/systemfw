@@ -8,8 +8,8 @@ struct ctx {
 
 extern struct ctx ctx_init();
 extern int ctx_destroy(struct ctx);
-extern int pop(struct ctx *);
-extern int push(struct ctx *,const char *const);
+extern int ctx_pop(struct ctx *);
+extern int ctx_push(struct ctx *,const char *const);
 extern int indexof(const struct ctx *const,const char *const);
 
 #endif
