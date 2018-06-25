@@ -1,6 +1,8 @@
 #ifndef __LAMBDA_
 #define __LAMBDA_
 
+#include "type.h"
+
 enum ltype {LAMBDA_ATOM,LAMBDA_APPL,LAMBDA_ABSTR};
 
 struct lambda {
@@ -15,6 +17,7 @@ struct lambda {
         } appl;
         struct abstr {
             char *v;
+            struct type *type;
             struct lambda *expr;
         } abstr;
     };

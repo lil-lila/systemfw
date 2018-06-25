@@ -1,5 +1,5 @@
-#ifndef __DEBRUIJN__
-#define __DEBRUIJN__ 1
+#ifndef __DEBRUIJN_
+#define __DEBRUIJN_
 struct ctx {
 	char const **terms;
 	unsigned int count;
