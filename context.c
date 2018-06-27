@@ -24,6 +24,6 @@ struct contextrecord *context_find(struct context *c,char *name) {
 
 }
 
-void context_destroy(struct context *c) {
-    free(c->list);
+void context_destroy(struct context c) {
+    if (c.list) free(c.list);
 }

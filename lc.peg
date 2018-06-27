@@ -2,30 +2,36 @@
 
 %prefix "lc"
 %value "struct lambda *"
-%auxil "struct debruijn *"
+%auxil "struct ctx *"
 %header {
     #include "context.h" 
     #include "lambda.h" 
     #include "type.h"
-    #include "debruijn.h" 
+    #include "debruijn.h"
+
+    struct ctx {
+        struct debruijn db;
+        struct context ctx;
+    };
 }
 %source {
     #ifndef PCC_ERROR
     #define PCC_ERROR(auxil) pcc_error(auxil)
-    static void pcc_error(struct debruijn *auxil) {
+    static void pcc_error(struct ctx *auxil) {
         fprintf(stderr, "Syntax error\n");
-        if(auxil) debruijn_destroy(*auxil);
+        if(auxil) debruijn_destroy(auxil->db);
         exit(1);
     }
     #endif /* PCC_ERROR */
 }
 
-main        <- ID EQUAL term
-             / _ '?' EQUAL term
-term        <- (t:application / t:abstraction) {$$=t;}
-abstraction <- LAMBDA ID:ID (OFTYPE TID:tterm)? {if (indexof(auxil,ID->atom.s)) PCC_ERROR(auxil); debruijn_push(auxil,ID->atom.s);}
+main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})*
+sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID->atom.s,NULL,T); free(ID); $$=T;}
+             / _ '?' EQUAL T:term {$$=T;}
+term        <- (T:application / T:abstraction) {$$=T;}
+abstraction <- LAMBDA ID:ID (OFTYPE TID:tterm)? {if (indexof(&auxil->db,ID->atom.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID->atom.s);}
                             DOT T:term {
-                                        debruijn_pop(auxil);
+                                        debruijn_pop(&auxil->db);
                                         $$=(struct lambda *)malloc(sizeof(struct lambda));
                                         if (!$$) PCC_ERROR(auxil);
                                         $$->t=LAMBDA_ABSTR;
@@ -43,17 +49,18 @@ application <- S:application T:atom {
              / T: atom {$$=T;}
 atom        <- ID:ID {$$=ID;}
              / LP T:term RP {$$=T;}
-ID          <- _ <[A-Za-z./_:*+=-][A-Za-z0-9./_:*+=-]*> _ {
+ID          <- _ <[A-Za-z/_:*+-][A-Za-z0-9/_:*+-]*> _ {
                                                 $$=(struct lambda *)malloc(sizeof(struct lambda));
                                                 if (!$$) PCC_ERROR(auxil);
                                                 $$->t=LAMBDA_ATOM;
                                                 $$->atom.s=strdup($1);
                                                 if (!$$->atom.s) PCC_ERROR(auxil);
-                                                $$->atom.index=indexof(auxil,$1);
+                                                $$->atom.index=indexof(&auxil->db,$1);
                                            }
 tterm       <- tatom (ARROW tterm)?
 tatom       <- ID:ID
              / LP T:tterm RP {$$=T;}
+SEP         <- _ ';' _
 EQUAL       <- _ '=' _
 ARROW       <- _ '->' _
 LAMBDA      <- _ '\\' _

@@ -12,6 +12,7 @@ struct context {
 
 struct context context_init();
 int context_add(struct context *,char *,struct type *,struct lambda *);
-void context_destroy(struct context *);
+struct contextrecord *context_find(struct context *,char *);
+void context_destroy(struct context);
 
 #endif
