@@ -6,11 +6,11 @@
 #include "eval.h"
 
 int main() {
-	struct ctx c=ctx_init();
+	struct debruijn c=debruijn_init();
 	lc_context_t *p=lc_create(&c);
 	struct lambda *l;
 	lc_parse(p,&l);
-	ctx_destroy(c);
+	debruijn_destroy(c);
 	
     printnode(l);
 	putchar('\n');
