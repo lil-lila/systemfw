@@ -9,20 +9,17 @@ int main() {
     struct ctx c;
     c.db=debruijn_init();
     c.ctx=context_init();
+    context_add(&c.ctx,"add",type_function(mktype(TYPE_NAME,"N",0),type_function(mktype(TYPE_NAME,"N",0),mktype(TYPE_NAME,"N",0))),NULL);
+    context_add(&c.ctx,"a1",mktype(TYPE_NAME,"N",0),NULL);
+    context_add(&c.ctx,"a2",mktype(TYPE_NAME,"N",0),NULL);
     lc_context_t *p=lc_create(&c);
-    struct lambda *l;
-    lc_parse(p,&l);
+    union lt _l;
+    lc_parse(p,&_l);
+    struct lambda *l=_l.l;
     debruijn_destroy(c.db);
-    for (int i=0;i<c.ctx.size;i++) {
-        printf("%s:",c.ctx.list[i].name);
-        //printtype(c.ctx.list[i].t);
-        printf(" = ");
-        printnode(c.ctx.list[i].expr);
-        putchar('\n');
-    }
     context_destroy(c.ctx);
     lc_destroy(p);
-
+    /*
     printnode(l);
     putchar('\n');
     putchar('\n');
@@ -33,6 +30,6 @@ int main() {
     printnode(m);
     putchar('\n');
     destroynode(m);
-    destroynode(l);
+    destroynode(l);*/
     return 0;
 }

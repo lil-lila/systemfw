@@ -1,17 +1,23 @@
 # typed lambda calculus
 
 %prefix "lc"
-%value "struct lambda *"
+%value "union lt"
 %auxil "struct ctx *"
 %header {
     #include "context.h" 
     #include "lambda.h" 
     #include "type.h"
     #include "debruijn.h"
+    extern struct type *infertype(struct lambda *,struct context *D);
 
     struct ctx {
         struct debruijn db;
         struct context ctx;
+    };
+
+    union lt {
+        struct lambda *l;
+        struct type *t;
     };
 }
 %source {
@@ -26,39 +32,42 @@
 }
 
 main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})*
-sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID->atom.s,NULL,T); free(ID); $$=T;}
-             / _ '?' EQUAL T:term {$$=T;}
+sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID.l->atom.s,NULL,T.l); free(ID.l); $$=T; printcontext(&auxil->ctx);}
+             / _ '?' EQUAL T:term {struct type *t; printtype(t=infertype(T.l,&auxil->ctx)); $$=T;}
 term        <- (T:application / T:abstraction) {$$=T;}
-abstraction <- LAMBDA ID:ID (OFTYPE TID:tterm)? {if (indexof(&auxil->db,ID->atom.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID->atom.s);}
+abstraction <- LAMBDA ID:ID (OFTYPE TID:tterm)? {if (indexof(&auxil->db,ID.l->atom.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.l->atom.s);}
                             DOT T:term {
                                         debruijn_pop(&auxil->db);
-                                        $$=(struct lambda *)malloc(sizeof(struct lambda));
-                                        if (!$$) PCC_ERROR(auxil);
-                                        $$->t=LAMBDA_ABSTR;
-                                        $$->abstr.v=ID->atom.s; free(ID);
-                                        $$->abstr.type=TID;
-                                        $$->abstr.expr=T;
+                                        $$.l=(struct lambda *)malloc(sizeof(struct lambda));
+                                        if (!$$.l) PCC_ERROR(auxil);
+                                        $$.l->t=LAMBDA_ABSTR;
+                                        $$.l->abstr.v=ID.l->atom.s; free(ID.l);
+                                        $$.l->abstr.type=TID.t;
+                                        $$.l->abstr.expr=T.l;
                                       }
 application <- S:application T:atom {
-                                        $$=(struct lambda *)malloc(sizeof(struct lambda));
-                                        if (!$$) PCC_ERROR(auxil);
-                                        $$->t=LAMBDA_APPL;
-                                        $$->appl.lhs=S;
-                                        $$->appl.rhs=T;
+                                        $$.l=(struct lambda *)malloc(sizeof(struct lambda));
+                                        if (!$$.l) PCC_ERROR(auxil);
+                                        $$.l->t=LAMBDA_APPL;
+                                        $$.l->appl.lhs=S.l;
+                                        $$.l->appl.rhs=T.l;
                                     }
              / T: atom {$$=T;}
 atom        <- ID:ID {$$=ID;}
              / LP T:term RP {$$=T;}
-ID          <- _ <[A-Za-z/_:*+-][A-Za-z0-9/_:*+-]*> _ {
-                                                $$=(struct lambda *)malloc(sizeof(struct lambda));
-                                                if (!$$) PCC_ERROR(auxil);
-                                                $$->t=LAMBDA_ATOM;
-                                                $$->atom.s=strdup($1);
-                                                if (!$$->atom.s) PCC_ERROR(auxil);
-                                                $$->atom.index=indexof(&auxil->db,$1);
+ID          <- _ <[A-Za-z/_*+-][A-Za-z0-9/_*+-]*> _ {
+                                                $$.l=(struct lambda *)malloc(sizeof(struct lambda));
+                                                if (!$$.l) PCC_ERROR(auxil);
+                                                $$.l->t=LAMBDA_ATOM;
+                                                $$.l->atom.s=strdup($1);
+                                                if (!$$.l->atom.s) PCC_ERROR(auxil);
+                                                $$.l->atom.index=indexof(&auxil->db,$1);
                                            }
-tterm       <- tatom (ARROW tterm)?
-tatom       <- ID:ID
+tterm       <- T:tatom {$$=T;} (ARROW S:tterm {$$.t=type_function(T.t,S.t);})? 
+tatom       <- ID:ID {
+                    $$.t=mktype(TYPE_NAME,ID.l->atom.s,0); free(ID.l);
+                    if (!$$.t) PCC_ERROR(auxil);
+                }
              / LP T:tterm RP {$$=T;}
 SEP         <- _ ';' _
 EQUAL       <- _ '=' _

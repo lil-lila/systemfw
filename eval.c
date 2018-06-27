@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 #include "lambda.h"
 
@@ -40,8 +41,8 @@ bool reducible(struct lambda *ast) {
 struct lambda *eval(struct lambda *ast) {
     if (!ast) return 0;
     while (reducible(ast)) {
-        printf("iteration:\n");
-        printnode(ast); putchar('\n');
+        //printf("iteration:\n");
+        //printnode(ast); putchar('\n');
         if (ast->t==LAMBDA_APPL) {
             if (ast->appl.lhs && ast->appl.lhs->t==LAMBDA_ABSTR) {
                 struct lambda *lhs_expr=ast->appl.lhs->abstr.expr;
