@@ -31,7 +31,7 @@
     #endif /* PCC_ERROR */
 }
 
-main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})*
+main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})* SEP?
 sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID.l->atom.s,NULL,T.l); free(ID.l); $$=T; printcontext(&auxil->ctx);}
              / _ '?' EQUAL T:term {struct type *t; printtype(t=infertype(T.l,&auxil->ctx)); $$=T;}
 term        <- (T:application / T:abstraction) {$$=T;}
