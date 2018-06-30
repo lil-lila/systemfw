@@ -1,12 +1,15 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "context.h"
+#include "lambda.h"
 #include "type.h"
 
 struct context context_init() {
     struct context c;
     c.size=0;
     c.list=NULL;
+    return c;
 }
 
 int context_add(struct context *c,char *n,struct type *t,struct lambda *l) {

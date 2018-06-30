@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "context.h"
 #include "unify.h"
 #include "lambda.h"
