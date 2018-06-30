@@ -18,6 +18,7 @@
     union lt {
         struct lambda *l;
         struct type *t;
+        char *s;
     };
 }
 %source {
@@ -25,23 +26,26 @@
     #define PCC_ERROR(auxil) pcc_error(auxil)
     static void pcc_error(struct ctx *auxil) {
         fprintf(stderr, "Syntax error\n");
-        if(auxil) debruijn_destroy(auxil->db);
+        if(auxil) {
+            debruijn_destroy(auxil->db);
+            context_destroy(auxil->ctx);
+        }
         exit(1);
     }
     #endif /* PCC_ERROR */
 }
 
 main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})* SEP?
-sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID.l->atom.s,NULL,T.l); free(ID.l); $$=T; printcontext(&auxil->ctx);}
+sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID.s,NULL,T.l); $$=T; printcontext(&auxil->ctx);}
              / _ '?' EQUAL T:term {struct type *t; printtype(t=infertype(T.l,&auxil->ctx)); $$=T;}
-term        <- (T:application / T:abstraction) {$$=T;}
-abstraction <- LAMBDA ID:ID (OFTYPE TID:tterm)? {if (indexof(&auxil->db,ID.l->atom.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.l->atom.s);}
+term        <- (T:application / T:abstraction / T:typeappl / T:typeabstr) {$$=T;}
+abstraction <- LAMBDA ID:ID (OF TID:tterm)? {if (indexof(&auxil->db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);}
                             DOT T:term {
                                         debruijn_pop(&auxil->db);
                                         $$.l=(struct lambda *)malloc(sizeof(struct lambda));
                                         if (!$$.l) PCC_ERROR(auxil);
                                         $$.l->t=LAMBDA_ABSTR;
-                                        $$.l->abstr.v=ID.l->atom.s; free(ID.l);
+                                        $$.l->abstr.v=ID.s;
                                         $$.l->abstr.type=TID.t;
                                         $$.l->abstr.expr=T.l;
                                       }
@@ -53,29 +57,40 @@ application <- S:application T:atom {
                                         $$.l->appl.rhs=T.l;
                                     }
              / T: atom {$$=T;}
-atom        <- ID:ID {$$=ID;}
+typeappl    <- T:term LB ID:ID RB
+typeabstr   <- UCLAMBDA ID:ID (OF K:tkind)? DOT T:term
+atom        <- ID:ID {
+                        $$.l=(struct lambda *)malloc(sizeof(struct lambda));
+                        if (!$$.l) PCC_ERROR(auxil);
+                        $$.l->t=LAMBDA_ATOM;
+                        $$.l->atom.s=ID.s;
+                        $$.l->atom.index=indexof(&auxil->db,ID.s);
+                     }
              / LP T:term RP {$$=T;}
-ID          <- _ <[A-Za-z/_*+-][A-Za-z0-9/_*+-]*> _ {
-                                                $$.l=(struct lambda *)malloc(sizeof(struct lambda));
-                                                if (!$$.l) PCC_ERROR(auxil);
-                                                $$.l->t=LAMBDA_ATOM;
-                                                $$.l->atom.s=strdup($1);
-                                                if (!$$.l->atom.s) PCC_ERROR(auxil);
-                                                $$.l->atom.index=indexof(&auxil->db,$1);
-                                           }
-tterm       <- T:tatom {$$=T;} (ARROW S:tterm {$$.t=type_function(T.t,S.t);})? 
+ID          <- _ <[A-Za-z_+][A-Za-z0-9_+]*> _ {
+                                                $$.s=strdup($1);
+                                                if (!$$.s) PCC_ERROR(auxil);
+                                              }
+tkind       <- UKIND
+tterm       <- T:tatom {$$=T;} (ARROW S:tterm {$$.t=type_function(T.t,S.t);})?
+             / FORALL ID:ID (OF K:tkind)? DOT T:tterm
 tatom       <- ID:ID {
-                    $$.t=mktype(TYPE_NAME,ID.l->atom.s,0); free(ID.l);
+                    $$.t=mktype(TYPE_NAME,ID.s,0);
                     if (!$$.t) PCC_ERROR(auxil);
                 }
              / LP T:tterm RP {$$=T;}
+UCLAMBDA    <- _ ('/\\' / '\u039b') _
+UKIND       <- _ '*' _
+FORALL      <- _ ('\\/' / '\u2200') _
 SEP         <- _ ';' _
 EQUAL       <- _ '=' _
-ARROW       <- _ '->' _
-LAMBDA      <- _ '\\' _
-OFTYPE      <- _ ':' _
+ARROW       <- _ ('->' / '\u2192') _
+LAMBDA      <- _ ('\\' / '\u03bb') _
+OF          <- _ ':' _
 DOT         <- _ '.' _
 LP          <- _ '(' _
 RP          <- _ ')' _
+LB          <- _ '[' _
+RB          <- _ ']' _
 _           <- [\n\t\r ]*
 
