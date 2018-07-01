@@ -8,6 +8,7 @@ enum ttype {
     /*TYPE_INTEGER, //arity = 0
     TYPE_BOOLEAN,
     TYPE_STRING,*/
+    TYPE_POLY, //over type with name 'name'
     TYPE_NAME,
     TYPE_FUNCTION, //arity = 2
     TYPE_PAIR
@@ -16,12 +17,9 @@ enum ttype {
 
 struct type {
     enum ttype t;
+    int arity,index;
     char *name;
-    //size_t id;
-    int arity;
-    struct type *args[2]; // for function,pair
-    /* for type variables */
-    struct type *instance;
+    struct type *args[2];
 };
 
 struct type *mktype(enum ttype,char *,int);

@@ -10,7 +10,6 @@ struct type *mktype(enum ttype type,char *name,int arity/*,struct type **args*/)
     t->arity=arity;
     t->args[0]=NULL;
     t->args[1]=NULL;
-    t->instance=NULL;
     return t;
 }
 
@@ -26,11 +25,17 @@ struct type *type_var(char *name) {
     return t;
 }
 
+struct type *type_poly(char *name,struct type *e) {
+    struct type *t=mktype(TYPE_POLY,name,0);
+    t->args[0]=e;
+    return t;
+}
+
 void printtype(struct type *t) {
     if (!t) {printf("<implicit>"); return;}
     switch (t->t) {
         case TYPE_VARIABLE:
-            if (t->instance) printtype(t->instance);
+            if (t->args[0]) printtype(t->args[0]);
             else {
                 if (t->name) printf("%s", t->name);
                 else printf("<unknown>");

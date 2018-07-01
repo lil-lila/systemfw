@@ -39,7 +39,7 @@ main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})* SEP?
 sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID.s,NULL,T.l); $$=T; printcontext(&auxil->ctx);}
              / _ '?' EQUAL T:term {struct type *t; printtype(t=infertype(T.l,&auxil->ctx)); $$=T;}
 term        <- (T:application / T:abstraction / T:typeappl / T:typeabstr) {$$=T;}
-abstraction <- LAMBDA ID:ID (OF TID:tterm)? {if (indexof(&auxil->db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);}
+abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);} #forced Church style to allow type inference
                             DOT T:term {
                                         debruijn_pop(&auxil->db);
                                         $$.l=(struct lambda *)malloc(sizeof(struct lambda));
@@ -57,7 +57,7 @@ application <- S:application T:atom {
                                         $$.l->appl.rhs=T.l;
                                     }
              / T: atom {$$=T;}
-typeappl    <- T:term LB ID:ID RB
+typeappl    <- T:term LB TT:tterm RB
 typeabstr   <- UCLAMBDA ID:ID (OF K:tkind)? DOT T:term
 atom        <- ID:ID {
                         $$.l=(struct lambda *)malloc(sizeof(struct lambda));
@@ -73,12 +73,12 @@ ID          <- _ <[A-Za-z_+][A-Za-z0-9_+]*> _ {
                                               }
 tkind       <- UKIND
 tterm       <- T:tatom {$$=T;} (ARROW S:tterm {$$.t=type_function(T.t,S.t);})?
-             / FORALL ID:ID (OF K:tkind)? DOT T:tterm
 tatom       <- ID:ID {
                     $$.t=mktype(TYPE_NAME,ID.s,0);
                     if (!$$.t) PCC_ERROR(auxil);
                 }
              / LP T:tterm RP {$$=T;}
+             / FORALL ID:ID (OF K:tkind)? DOT T:tterm
 UCLAMBDA    <- _ ('/\\' / '\u039b') _
 UKIND       <- _ '*' _
 FORALL      <- _ ('\\/' / '\u2200') _

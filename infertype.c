@@ -5,17 +5,13 @@
 #include "lambda.h"
 
 struct type *infertype(struct lambda *l,struct context *D) {
-    printf("b\n");
     if (!l) return NULL;
     switch(l->t) {
         case LAMBDA_ATOM: {
-                printf("ATOM\n");
                 struct contextrecord *r = context_find(D,l->atom.s);
                 if (!r) return NULL;
-                printf("enter\n");
                 printnode(r->expr);
                 if (!r->t) r->t=infertype(r->expr,D);
-                printf("exit\n");
                 return r->t;
                 break;
             }
