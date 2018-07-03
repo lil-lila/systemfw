@@ -12,6 +12,8 @@
 
     struct ctx {
         struct debruijn db;
+        struct debruijn type_db;
+        struct debruijn type_db_tc;
         struct context ctx;
     };
 
@@ -20,45 +22,69 @@
         struct type *t;
         char *s;
     };
+
+    struct ctx ctx_init();
+    void ctx_destroy(struct ctx *);
 }
 %source {
     #ifndef PCC_ERROR
     #define PCC_ERROR(auxil) pcc_error(auxil)
     static void pcc_error(struct ctx *auxil) {
         fprintf(stderr, "Syntax error\n");
-        if(auxil) {
-            debruijn_destroy(auxil->db);
-            context_destroy(auxil->ctx);
-        }
+        if(auxil) ctx_destroy(auxil);
         exit(1);
     }
     #endif /* PCC_ERROR */
+    struct ctx ctx_init() {
+        struct ctx c;
+        c.db=debruijn_init();
+        c.type_db=debruijn_init();
+        c.type_db_tc=debruijn_init();
+        c.ctx=context_init();
+        return c;
+    }
+    void ctx_destroy(struct ctx *c) {
+        debruijn_destroy(c->db);
+        debruijn_destroy(c->type_db);
+        debruijn_destroy(c->type_db_tc);
+        context_destroy(c->ctx);
+    }
 }
 
 main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})* SEP?
-sentence    <- ID:ID EQUAL T:term {context_add(&auxil->ctx,ID.s,NULL,T.l); $$=T; printcontext(&auxil->ctx);}
+sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); $$=T; printcontext(&auxil->ctx);}
              / _ '?' EQUAL T:term {struct type *t; printtype(t=infertype(T.l,&auxil->ctx)); $$=T;}
-term        <- (T:application / T:abstraction / T:typeappl / T:typeabstr) {$$=T;}
-abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);} #forced Church style to allow type inference
+term        <- (T:application / T:abstraction) {$$=T;}
+abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || context_findterm(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);} #forced Church style to allow type inference
                             DOT T:term {
                                         debruijn_pop(&auxil->db);
                                         $$.l=(struct lambda *)malloc(sizeof(struct lambda));
                                         if (!$$.l) PCC_ERROR(auxil);
                                         $$.l->t=LAMBDA_ABSTR;
                                         $$.l->abstr.v=ID.s;
+                                        $$.l->abstr.overtype=false;
                                         $$.l->abstr.type=TID.t;
                                         $$.l->abstr.expr=T.l;
                                       }
-application <- S:application T:atom {
-                                        $$.l=(struct lambda *)malloc(sizeof(struct lambda));
-                                        if (!$$.l) PCC_ERROR(auxil);
-                                        $$.l->t=LAMBDA_APPL;
-                                        $$.l->appl.lhs=S.l;
-                                        $$.l->appl.rhs=T.l;
-                                    }
+             / UCLAMBDA ID:ID (OF K:tkind)? {if (indexof(&auxil->type_db,ID.s) /* || context_findtype(auxil->ctx,ID.s)*/) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
+                               DOT T:term {
+                                            debruijn_pop(&auxil->type_db);
+                                            $$.l=(struct lambda *)malloc(sizeof(struct lambda));
+                                            if (!$$.l) PCC_ERROR(auxil);
+                                            $$.l->t=LAMBDA_ABSTR;
+                                            $$.l->abstr.v=ID.s;
+                                            $$.l->abstr.overtype=true;
+                                            $$.l->abstr.type=NULL; //$$.l->abstr.kind=K;
+                                            $$.l->abstr.expr=T.l;
+                                          }
+application <- S:application {
+                                 $$.l=(struct lambda *)malloc(sizeof(struct lambda));
+                                 if (!$$.l) PCC_ERROR(auxil);
+                                 $$.l->t=LAMBDA_APPL;
+                                 $$.l->appl.lhs=S.l;
+                             } (T:atom {$$.l->appl.overtype=false; $$.l->appl.rhs.l=T.l;}
+                               / LB TT:tterm RB {$$.l->appl.overtype=true; $$.l->appl.rhs.t=TT.t;})
              / T: atom {$$=T;}
-typeappl    <- T:term LB TT:tterm RB
-typeabstr   <- UCLAMBDA ID:ID (OF K:tkind)? DOT T:term
 atom        <- ID:ID {
                         $$.l=(struct lambda *)malloc(sizeof(struct lambda));
                         if (!$$.l) PCC_ERROR(auxil);
@@ -75,10 +101,15 @@ tkind       <- UKIND
 tterm       <- T:tatom {$$=T;} (ARROW S:tterm {$$.t=type_function(T.t,S.t);})?
 tatom       <- ID:ID {
                     $$.t=mktype(TYPE_NAME,ID.s,0);
+                    $$.t->index=indexof(&auxil->type_db,ID.s);
                     if (!$$.t) PCC_ERROR(auxil);
                 }
              / LP T:tterm RP {$$=T;}
-             / FORALL ID:ID (OF K:tkind)? DOT T:tterm
+             / FORALL ID:ID (OF K:tkind)? {if (indexof(&auxil->type_db_tc,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db_tc,ID.s);}
+                             DOT T:tterm {
+                                            debruijn_pop(&auxil->type_db_tc);
+                                            $$.t=type_poly(ID.s,T.t);
+                                         }
 UCLAMBDA    <- _ ('/\\' / '\u039b') _
 UKIND       <- _ '*' _
 FORALL      <- _ ('\\/' / '\u2200') _

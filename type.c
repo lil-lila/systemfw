@@ -26,7 +26,7 @@ struct type *type_var(char *name) {
 }
 
 struct type *type_poly(char *name,struct type *e) {
-    struct type *t=mktype(TYPE_POLY,name,0);
+    struct type *t=mktype(TYPE_POLY,name,1);
     t->args[0]=e;
     return t;
 }
@@ -51,13 +51,13 @@ void printtype(struct type *t) {
             printtype(t->args[1]);
             printf(")");
             break;
-        case TYPE_PAIR:
+        /*case TYPE_PAIR:
             printf("(");
             printtype(t->args[0]);
             printf(" * ");
             printtype(t->args[1]);
             printf(")");
-            break;
+            break;*/
         default: fprintf(stderr, "unknown type\n"); break;
     }
 }
@@ -69,7 +69,7 @@ void destroytype(struct type *t) {
         case TYPE_NAME:
             break;
         case TYPE_FUNCTION:
-        case TYPE_PAIR:
+        //case TYPE_PAIR:
             destroytype(t->args[0]);
             destroytype(t->args[1]);
             break;

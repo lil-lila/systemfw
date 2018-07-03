@@ -11,20 +11,23 @@ enum ttype {
     TYPE_POLY, //over type with name 'name'
     TYPE_NAME,
     TYPE_FUNCTION, //arity = 2
-    TYPE_PAIR
     //,TYPE_LIST //arity = 1
 };
 
 struct type {
     enum ttype t;
-    int arity,index;
+    int arity;
     char *name;
-    struct type *args[2];
+    union {
+        struct type *args[2];
+        int index;
+    };
 };
 
 struct type *mktype(enum ttype,char *,int);
 struct type *type_function(struct type *,struct type *);
 struct type *type_var(char *);
+struct type *type_poly(char *,struct type *);
 void printtype(struct type *);
 void destroytype(struct type *);
 

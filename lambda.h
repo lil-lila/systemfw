@@ -1,6 +1,7 @@
 #ifndef __LAMBDA_
 #define __LAMBDA_
 
+#include <stdbool.h>
 #include "type.h"
 
 enum ltype {LAMBDA_ATOM,LAMBDA_APPL,LAMBDA_ABSTR};
@@ -13,9 +14,15 @@ struct lambda {
             char *s;
         } atom;
         struct appl {
-            struct lambda *lhs,*rhs;
+            bool overtype;
+            struct lambda *lhs;
+            union {
+                struct lambda *l;
+                struct type *t;
+            } rhs;
         } appl;
         struct abstr {
+            bool overtype;
             char *v;
             struct type *type;
             struct lambda *expr;
