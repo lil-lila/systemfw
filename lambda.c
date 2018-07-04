@@ -17,7 +17,8 @@ struct lambda *dupnode(struct lambda *l) {
             break;
         case LAMBDA_APPL:
             lc->appl.lhs=dupnode(l->appl.lhs);
-            lc->appl.rhs=dupnode(l->appl.rhs);
+            if (l->appl.overtype) lc->appl.rhs.t=duptype(l->appl.rhs.t);
+            else lc->appl.rhs.l=dupnode(l->appl.rhs.l);
         default:
             break;
     }
@@ -36,7 +37,8 @@ void destroynode(struct lambda *lc) {
             break;
         case LAMBDA_APPL:
             destroynode(lc->appl.lhs);
-            destroynode(lc->appl.rhs);
+            if (lc->appl.overtype) destroytype(lc->appl.rhs.t);
+            else destroynode(lc->appl.rhs.l);
             break;
         default:
             break;
@@ -51,18 +53,25 @@ void printnode(struct lambda *lc) {
             printf("%s_%d",lc->atom.s,lc->atom.index);
             break;
         case LAMBDA_ABSTR:
-            printf("\\%s.",lc->abstr.v);
+            printf("%s%s:",lc->abstr.overtype?"/\\":"\\",lc->abstr.v);
+            printtype(lc->abstr.type);
+            putchar('.');
             printnode(lc->abstr.expr);
-            //putchar(')');
             break;
         case LAMBDA_APPL:
             if (lc->appl.lhs->t==LAMBDA_ABSTR) putchar('(');
             printnode(lc->appl.lhs);
             if (lc->appl.lhs->t==LAMBDA_ABSTR) putchar(')');
             putchar(' ');
-            if (lc->appl.rhs->t!=LAMBDA_ATOM) putchar('(');
-            printnode(lc->appl.rhs);
-            if (lc->appl.rhs->t!=LAMBDA_ATOM) putchar(')');
+            if (lc->appl.overtype) {
+                putchar('[');
+                printtype(lc->appl.rhs.t);
+                putchar(']');
+            } else {
+                if (lc->appl.rhs.l->t!=LAMBDA_ATOM) putchar('(');
+                printnode(lc->appl.rhs.l);
+                if (lc->appl.rhs.l->t!=LAMBDA_ATOM) putchar(')');
+            }
             break;
         default:
             break;

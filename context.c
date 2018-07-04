@@ -8,6 +8,7 @@
 struct context context_init() {
     struct context c;
     c.size=0;
+    c.typesize=0;
     c.termlist=NULL;
     c.typelist=NULL;
     return c;
@@ -19,7 +20,7 @@ int context_addterm(struct context *c,char *n,struct type *t,struct lambda *l) {
         if (context_findterm(c,n)) return 0;
         c->termlist=(struct contextrecord *)realloc(c->termlist,++c->size*sizeof(struct contextrecord));
     }
-    if (!c->size) return 0;
+    if (!c->termlist) return 0;
     c->termlist[c->size-1].expr=l;
     c->termlist[c->size-1].name=n;
     c->termlist[c->size-1].t=t;
@@ -50,30 +51,37 @@ void context_destroy(struct context c) {
 }
 
 int context_addtype(struct context *c,char *n,struct type *t) {
-    if (!c->size || !c->typelist) c->typelist=(struct typerecord *)malloc((c->size=1)*sizeof(struct typerecord));
+    if (!c->typesize || !c->typelist) c->typelist=(struct typerecord *)malloc((c->typesize=1)*sizeof(struct typerecord));
     else {
         if (context_findtype(c,n)) return 0;
-        c->typelist=(struct typerecord *)realloc(c->typelist,++c->size*sizeof(struct typerecord));
+        c->typelist=(struct typerecord *)realloc(c->typelist,++c->typesize*sizeof(struct typerecord));
     }
-    if (!c->size) return 0;
-    c->typelist[c->size-1].name=n;
-    c->typelist[c->size-1].t=t;
+    if (!c->typelist) return 0;
+    c->typelist[c->typesize-1].name=n;
+    c->typelist[c->typesize-1].t=t;
     return 1;
 }
 
 struct typerecord *context_findtype(struct context *c,char *name) {
-    if (!c->size) return NULL;
-    for(int i=c->size-1;i>=0;i--) if (!strcmp(c->typelist[i].name,name)) return &c->typelist[i];
+    if (!c->typesize) return NULL;
+    for(int i=c->typesize-1;i>=0;i--) if (!strcmp(c->typelist[i].name,name)) return &c->typelist[i];
+    return NULL;
+
+}
+
+struct type *fold(struct context *c,struct type *f) {
+    if (!c) return NULL;
+    for(int i=c->typesize-1;i>=0;i--) if (cmptype(c->typelist[i].t,f)) return mktype(TYPE_NAME,c->typelist[i].name,0);
     return NULL;
 
 }
 
 void context_deletetype(struct context *c,char *n) {
     if (c && c->typelist)
-        for (int i=c->size-1;i>=0;i--)
+        for (int i=c->typesize-1;i>=0;i--)
             if (!strcmp(c->typelist[i].name,n)) {
-                c->typelist[i]=c->typelist[c->size-1];
-                c->typelist=(struct typerecord *)realloc(c->typelist,--c->size*(sizeof(struct typerecord)));
+                c->typelist[i]=c->typelist[c->typesize-1];
+                c->typelist=(struct typerecord *)realloc(c->typelist,--c->typesize*(sizeof(struct typerecord)));
                 return;
             }
     return;
@@ -85,6 +93,12 @@ void printcontext(struct context *c) {
         printtype(c->termlist[i].t);
         printf(" = ");
         printnode(c->termlist[i].expr);
+        putchar('\n');
+    }
+    for (int i=0;i<c->typesize;i++) {
+        printf(":%s",c->typelist[i].name);
+        printf(" = ");
+        printtype(c->typelist[i].t);
         putchar('\n');
     }
 }

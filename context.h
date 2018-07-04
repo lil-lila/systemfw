@@ -2,7 +2,7 @@
 #define __CONTEXT_
 
 struct context {
-    int size;
+    int size,typesize;
     struct contextrecord {
         char *name;
         struct type *t;
@@ -20,6 +20,7 @@ struct contextrecord *context_findterm(struct context *,char *);
 void context_deleteterm(struct context *,char *);
 int context_addtype(struct context *,char *,struct type *);
 struct typerecord *context_findtype(struct context *,char *);
+struct type *fold(struct context *,struct type *);
 void context_deletetype(struct context *,char *);
 void context_destroy(struct context);
 void printcontext(struct context *);

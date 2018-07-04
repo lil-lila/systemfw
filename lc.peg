@@ -13,7 +13,6 @@
     struct ctx {
         struct debruijn db;
         struct debruijn type_db;
-        struct debruijn type_db_tc;
         struct context ctx;
     };
 
@@ -39,14 +38,12 @@
         struct ctx c;
         c.db=debruijn_init();
         c.type_db=debruijn_init();
-        c.type_db_tc=debruijn_init();
         c.ctx=context_init();
         return c;
     }
     void ctx_destroy(struct ctx *c) {
         debruijn_destroy(c->db);
         debruijn_destroy(c->type_db);
-        debruijn_destroy(c->type_db_tc);
         context_destroy(c->ctx);
     }
 }
@@ -54,6 +51,7 @@
 main        <- S:sentence {$$=S;} (SEP S:sentence {$$=S;})* SEP?
 sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); $$=T; printcontext(&auxil->ctx);}
              / _ '?' EQUAL T:term {struct type *t; printtype(t=infertype(T.l,&auxil->ctx)); $$=T;}
+             / _ ':' ID:ID EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t); $$=T; printcontext(&auxil->ctx);}
 term        <- (T:application / T:abstraction) {$$=T;}
 abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || context_findterm(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);} #forced Church style to allow type inference
                             DOT T:term {
@@ -105,9 +103,9 @@ tatom       <- ID:ID {
                     if (!$$.t) PCC_ERROR(auxil);
                 }
              / LP T:tterm RP {$$=T;}
-             / FORALL ID:ID (OF K:tkind)? {if (indexof(&auxil->type_db_tc,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db_tc,ID.s);}
+             / FORALL ID:ID (OF K:tkind)? {if (indexof(&auxil->type_db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
                              DOT T:tterm {
-                                            debruijn_pop(&auxil->type_db_tc);
+                                            debruijn_pop(&auxil->type_db);
                                             $$.t=type_poly(ID.s,T.t);
                                          }
 UCLAMBDA    <- _ ('/\\' / '\u039b') _

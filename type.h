@@ -1,6 +1,8 @@
 #ifndef __TYPE_
 #define __TYPE_
 
+#include <stdbool.h>
+
 enum ttype {
     /* type variable */
     TYPE_VARIABLE,
@@ -29,6 +31,8 @@ struct type *type_function(struct type *,struct type *);
 struct type *type_var(char *);
 struct type *type_poly(char *,struct type *);
 void printtype(struct type *);
+struct type *duptype(struct type *);
+bool cmptype(struct type *,struct type *);
 void destroytype(struct type *);
 
 #endif
