@@ -119,12 +119,16 @@ void destroytype(struct type *t) {
     switch (t->t) {
         case TYPE_VARIABLE: 
         case TYPE_NAME:
+            free(t->name);
             break;
         case TYPE_FUNCTION:
         //case TYPE_PAIR:
             destroytype(t->args[0]);
             destroytype(t->args[1]);
             break;
+        case TYPE_POLY:
+            free(t->name);
+            destroytype(t->args[0]);
         default: break;
     }
     free(t);

@@ -46,6 +46,15 @@ void context_deleteterm(struct context *c,char *n) {
 }
 
 void context_destroy(struct context c) {
+    for (int i=0;i<c.size;i++) {
+        free(c.termlist[i].name);
+        destroynode(c.termlist[i].expr);
+        destroytype(c.termlist[i].t);
+    }
+    for (int i=0;i<c.typesize;i++) {
+        free(c.termlist[i].name);
+        destroytype(c.typelist[i].t);
+    }
     if (c.termlist) free(c.termlist);
     if (c.typelist) free(c.typelist);
 }

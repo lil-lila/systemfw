@@ -33,6 +33,7 @@ void destroynode(struct lambda *lc) {
             break;
         case LAMBDA_ABSTR:
             free(lc->abstr.v);
+            destroytype(lc->abstr.type);
             destroynode(lc->abstr.expr);
             break;
         case LAMBDA_APPL:
