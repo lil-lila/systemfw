@@ -2,15 +2,17 @@
 #define __CONTEXT_
 
 struct context {
-    int size,typesize;
+    //int size,typesize;
     struct contextrecord {
         char *name;
         struct type *t;
         struct lambda *expr;
+        struct contextrecord *prev;
     } *termlist;
     struct typerecord {
         char *name;
         struct type *t;
+        struct typerecord *prev;
     } *typelist;
 };
 

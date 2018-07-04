@@ -33,11 +33,7 @@ struct type *infertype(struct lambda *l,struct context *D) {
         case LAMBDA_ATOM: {
                 struct contextrecord *r = context_findterm(D,l->atom.s);
                 if (!r) return NULL;
-                //printnode(r->expr);
                 if (!r->t) r->t=infertype(r->expr,D);
-                /*printf("%s:",l->atom.s);
-                printtype(r->t);
-                putchar('\n');*/
                 return duptype(r->t);
             }
         case LAMBDA_ABSTR: {
@@ -46,7 +42,7 @@ struct type *infertype(struct lambda *l,struct context *D) {
                     struct type *s=type_poly(strdup(l->abstr.v),t);
                     return s;
                 } else { // \x:s.T:t : s->t
-                    struct type *s=l->abstr.type;
+                    struct type *s=duptype(l->abstr.type);
                     if (l->abstr.type) context_addterm(D,l->abstr.v,s,NULL);
                     else return NULL;
                     struct type *t=infertype(l->abstr.expr,D);
@@ -68,6 +64,7 @@ struct type *infertype(struct lambda *l,struct context *D) {
                     }
                     if (t1 && t1->t==TYPE_POLY) {
                         struct type *s=subtype(t1->args[0],t2,1);
+                        free(t1->name);
                         free(t1);
                         return s;
                     } else return NULL;
