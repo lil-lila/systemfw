@@ -1,4 +1,5 @@
-/* implementation of unify algorithm               */
+/* implementation of unify algorithm,              */
+/* adopted for type unify for (HM) system F        */
 /* see http://arxiv.org/abs/cs/0603080 for details */
 
 #include <stdbool.h>
@@ -22,8 +23,9 @@ bool unify(struct type *ix, struct type *iy) {
         struct type *j=typestack_pop(&Sy);
         if (!isvar(i) && !isvar(j)) { // case 1: i is bound to a term and j is bound to a term}
             if (i->t==j->t && i->arity==j->arity
-                    && (!(i->t==TYPE_NAME) || ((!i->name && !j->name) || !strcmp(i->name,j->name))/* type(i)=type(j)=NAME => name(i)=name(j)*/)) {
-                if (i->arity > 0) {
+                    && (!(i->t==TYPE_NAME) || ((!i->name && !j->name) || !strcmp(i->name,j->name)) /* type(i)=type(j)=NAME => name(i)=name(j) */
+                        || (!(i->t==TYPE_POLY) || cmptype(i,j)))) { /* type(i)=type(j)=POLY => i=j */
+                if (i->t!=TYPE_POLY && i->arity > 0) {
                     for (int I=0;I<i->arity;I++) typestack_push(&Sx,i->args[I]);
                     for (int J=0;J<j->arity;J++) typestack_push(&Sy,j->args[J]);
                 }

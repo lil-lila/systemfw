@@ -34,6 +34,10 @@ struct type *infertype(struct lambda *l,struct context *D) {
                 struct contextrecord *r = context_findterm(D,l->atom.s);
                 if (!r) return NULL;
                 if (!r->t) r->t=infertype(r->expr,D);
+                if (r->t && r->t->t==TYPE_NAME && !r->t->index) {
+                    struct typerecord *str=context_findtype(D,r->t->name);
+                    if (str) return duptype(str->t);
+                }
                 return duptype(r->t);
             }
         case LAMBDA_ABSTR: {
@@ -58,10 +62,8 @@ struct type *infertype(struct lambda *l,struct context *D) {
                     struct type *t2=l->appl.rhs.t;
                     if (t2 && t2->t==TYPE_NAME && !t2->index) {
                         struct typerecord *t2_r=context_findtype(D,t2->name);
-                        if (t2_r) t2=duptype(t2_r->t);
-                        else t2=duptype(t2);
-
-                    }
+                        if (t2_r) t2=/*duptype(*/t2_r->t;//);
+                    } //else t2=duptype(t2);
                     if (t1 && t1->t==TYPE_POLY) {
                         struct type *s=subtype(t1->args[0],t2,1);
                         free(t1->name);
@@ -75,15 +77,14 @@ struct type *infertype(struct lambda *l,struct context *D) {
                     struct type *result=type_var(NULL);
                     struct type *tf=type_function(rhst,result);
                     bool r=unify(tf,lhst);
+                    struct type *t=NULL;
+                    if (result) t=duptype(result->args[0]);
                     destroytype(lhst);
                     destroytype(rhst);
                     free(tf);
-                    if (!r) return NULL;
-                    else {
-                        struct type *t=duptype(result->args[0]);
-                        free(result);
-                        return t;
-                    }
+                    free(result);
+                    printf("result: %d\n",r);
+                    return t;
                 }
             }
         default: return NULL;

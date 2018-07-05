@@ -7,9 +7,9 @@
 
 int main() {
     struct ctx c=ctx_init();
-    context_addterm(&c.ctx,"add",type_function(mktype(TYPE_NAME,"N",0),type_function(mktype(TYPE_NAME,"N",0),mktype(TYPE_NAME,"N",0))),NULL);
-    context_addterm(&c.ctx,"a1",mktype(TYPE_NAME,"N",0),NULL);
-    context_addterm(&c.ctx,"a2",mktype(TYPE_NAME,"N",0),NULL);
+    //context_addterm(&c.ctx,"add",type_function(mktype(TYPE_NAME,"N",0),type_function(mktype(TYPE_NAME,"N",0),mktype(TYPE_NAME,"N",0))),NULL);
+    //context_addterm(&c.ctx,"a1",mktype(TYPE_NAME,"N",0),NULL);
+    //context_addterm(&c.ctx,"a2",mktype(TYPE_NAME,"N",0),NULL);
     lc_context_t *p=lc_create(&c);
     union lt _l;
     lc_parse(p,&_l);

@@ -33,7 +33,7 @@ struct type *type_poly(char *name,struct type *e) {
 }
 
 void printtype(struct type *t) {
-    if (!t) {printf("<implicit>"); return;}
+    if (!t) {printf("<>"); return;}
     switch (t->t) {
         case TYPE_VARIABLE:
             if (t->args[0]) {printf("i:"); printtype(t->args[0]);}
