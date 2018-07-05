@@ -28,7 +28,7 @@ struct type *subtype(struct type *where,struct type *with,int atindex) {
 
 struct type *infertype(struct lambda *l,struct context *D) {
     if (!l) return NULL;
-    //printf("TN:"); printnode(l); putchar('\n');
+    // printf("TN:"); printnode(l); putchar('\n');
     switch(l->t) {
         case LAMBDA_ATOM: {
                 struct contextrecord *r = context_findterm(D,l->atom.s);
@@ -78,12 +78,12 @@ struct type *infertype(struct lambda *l,struct context *D) {
                     struct type *tf=type_function(rhst,result);
                     bool r=unify(tf,lhst);
                     struct type *t=NULL;
-                    if (result) t=duptype(result->args[0]);
+                    if (r && result) t=duptype(result->args[0]);
                     destroytype(lhst);
                     destroytype(rhst);
                     free(tf);
                     free(result);
-                    printf("result: %d\n",r);
+                    //printf("result: %d\n",r);
                     return t;
                 }
             }

@@ -50,7 +50,7 @@
 
 main        <- S:sentence {/*$$=S;*/} (SEP S:sentence {/*$$=S;*/})* SEP?
 sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); /*$$=T;*/ printcontext(&auxil->ctx);}
-             / _ '?' EQUAL T:term {struct type *t; printtype(t=infertype(T.l,&auxil->ctx)); destroynode(T.l); destroytype(t); putchar('\n');/*$$=T;*/}
+             / _ '?' EQUAL T:term {struct type *t; /*printnode(T.l); putchar('\n');*/ printtype(t=infertype(T.l,&auxil->ctx)); destroynode(T.l); destroytype(t); putchar('\n');/*$$=T;*/}
              / _ ':' ID:ID EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t); /*$$=T;*/ printcontext(&auxil->ctx);}
 term        <- (T:application / T:abstraction) {$$=T;}
 abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || context_findterm(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);} #forced Church style to allow type inference
