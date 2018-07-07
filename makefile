@@ -1,6 +1,6 @@
 CC=cc
 CFLAGS=-Wall -g
-OBJ=context.o debruijn.o infertype.o lambda.o lc.o main.o type.o typestack.o unify.o
+OBJ=context.o debruijn.o eval.o infertype.o lambda.o lc.o main.o type.o typestack.o unify.o
 VG=valgrind
 VGARGS=-v --leak-resolution=high --show-leak-kinds=all --track-origins=yes --log-file=summary --leak-check=full --leak-check-heuristics=all
 .PHONY: clean check debug
@@ -18,8 +18,8 @@ check: a.out
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-lc.c:
+lc.c: lc.peg
 	./pcc lc.peg
 
 clean:
-	rm -rf a.out *.o *.gcno *.gcda *.gcov
+	rm -rf a.out *.o *.gcno *.gcda *.gcov lc.c lc.h

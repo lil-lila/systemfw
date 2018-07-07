@@ -12,10 +12,13 @@ struct lambda *dupnode(struct lambda *l) {
             lc->atom.index=l->atom.index;
             break;
         case LAMBDA_ABSTR:
+            lc->abstr.overtype=l->abstr.overtype;
             lc->abstr.v=strdup(l->abstr.v);
             lc->abstr.expr=dupnode(l->abstr.expr);
+            lc->abstr.type=duptype(l->abstr.type);
             break;
         case LAMBDA_APPL:
+            lc->appl.overtype=l->appl.overtype;
             lc->appl.lhs=dupnode(l->appl.lhs);
             if (l->appl.overtype) lc->appl.rhs.t=duptype(l->appl.rhs.t);
             else lc->appl.rhs.l=dupnode(l->appl.rhs.l);
