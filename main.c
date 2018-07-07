@@ -13,7 +13,7 @@ int main() {
     lc_context_t *p=lc_create(&c);
     union lt _l;
     lc_parse(p,&_l);
-    struct lambda *l=_l.l;
+    //struct lambda *l=_l.l;
     ctx_destroy(&c);
     lc_destroy(p);
     /*

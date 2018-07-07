@@ -60,7 +60,9 @@ void printnode(struct lambda *lc) {
             printf("%s%s:",lc->abstr.overtype?"/\\":"\\",lc->abstr.v);
             printtype(lc->abstr.type);
             putchar('.');
+            if (lc->abstr.expr->t==LAMBDA_APPL) putchar('(');
             printnode(lc->abstr.expr);
+            if (lc->abstr.expr->t==LAMBDA_APPL) putchar(')');
             break;
         case LAMBDA_APPL:
             if (lc->appl.lhs->t==LAMBDA_ABSTR) putchar('(');

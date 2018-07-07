@@ -111,7 +111,7 @@ struct type *fold(struct context *c,struct type *f) {
     if (!c) return NULL;
     struct typerecord *cur=c->typelist;
     while (cur) {
-        if (cmptype(cur->t,f)) return mktype(TYPE_NAME,cur->name,0);
+        if (cmptype(cur->t,f)) return mktype(TYPE_NAME,strdup(cur->name),0);
         cur=cur->prev;
     }
     return NULL;

@@ -13,7 +13,9 @@ debug : LDFLAGS += -lgcov
 debug : a.out
 
 check: a.out
-	$(VG) $(VGARGS) ./a.out < ts
+	echo >>out
+	echo `date` >>out
+	$(VG) $(VGARGS) ./a.out < ts >>out
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

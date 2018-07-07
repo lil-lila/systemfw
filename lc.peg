@@ -50,7 +50,7 @@
 }
 
 main        <- S:sentence {/*$$=S;*/} (SEP S:sentence {/*$$=S;*/})* SEP?
-sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); /*$$=T;*/ printcontext(&auxil->ctx);}
+sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
              / _ '?' EQUAL T:term {struct type *t; struct lambda *l;
                                    printf("expr:"); printnode(T.l); putchar('\n');
                                    printf(" type:"); printtype(t=infertype(T.l,&auxil->ctx)); putchar('\n');
