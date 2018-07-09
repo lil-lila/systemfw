@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include "lambda.h"
 #include "context.h"
+#include "infertype.h"
 
 struct lambda *substitute(struct lambda *where,struct lambda *with,int atindex) {
     if (!where || !with) return NULL;
@@ -36,7 +38,6 @@ bool reducible(struct lambda *ast) {
     else if (ast->t==LAMBDA_ABSTR && !reducible(ast->abstr.expr)) return false;
     else if (ast->t==LAMBDA_APPL) {
         if (ast->appl.lhs->t==LAMBDA_ABSTR) {
-            printf("B: %d\n",(ast->appl.overtype == ast->appl.lhs->abstr.overtype));
             if (ast->appl.overtype == ast->appl.lhs->abstr.overtype) return true;
             else return false;
         }
@@ -81,60 +82,110 @@ struct lambda *beta(struct lambda *l) {
     return l;
 }
 
-struct lambda *eval(struct lambda *l,struct context *D) {
+struct lambda *expand(struct lambda *lc,const struct context *const D) {
+    if (!lc) return NULL;
+    switch(lc->t) {
+        case LAMBDA_ATOM:
+            if (lc->atom.index==0) {
+                struct contextrecord *r=context_findterm(D,lc->atom.s);
+                if (r) {
+                    destroynode(lc);
+                    lc=expand(dupnode(r->expr),D);
+                }
+            }
+            break;
+        case LAMBDA_ABSTR:
+            lc->abstr.expr=expand(lc->abstr.expr,D);
+            break;
+        case LAMBDA_APPL:
+            lc->appl.lhs=expand(lc->appl.lhs,D);
+            if (!lc->appl.overtype)
+                lc->appl.rhs.l=expand(lc->appl.rhs.l,D);
+            break;
+        default:
+            break;
+    }
+    return lc;
+}
+
+struct lambda *applytype(struct lambda *l,struct type *t,const struct context *const D,int atindex) {
     if (!l) return NULL;
     switch(l->t) {
         case LAMBDA_ATOM:
-            //printf("  atom\n");
-            if (l->atom.index==0) {
-                //printf("  i=0\n");
-                struct contextrecord *r=context_findterm(D,l->atom.s);
-                if (r) {
-                    destroynode(l);
-                    l=dupnode(r->expr);
-                }
-            } else printf("  N\n");
             break;
         case LAMBDA_ABSTR: {
-            //printf("  abstr\n");
+            //printf("A\n");
+            int ni=atindex;
+            if (!l->abstr.overtype) {
+                //printf("   %d;",l->abstr.type==0);printtype(l->abstr.type); putchar('\n');
+                l->abstr.type=subtype(l->abstr.type,t,atindex);
+                //printf("   %d;",l->abstr.type==0);printtype(l->abstr.type); putchar('\n');
+            }
+            else ni++;
+            l->abstr.expr=applytype(l->abstr.expr,t,D,ni);
+            break;
+                           }
+        case LAMBDA_APPL:
+            l->appl.lhs=applytype(l->appl.lhs,t,D,atindex);
+            if (!l->appl.overtype) l->appl.rhs.l=applytype(l->appl.rhs.l,t,D,atindex);
+            else l->appl.rhs.t=subtype(l->appl.rhs.t,t,atindex);
+            break;
+        default:
+            break;
+    }
+    return l;
+
+}
+
+struct lambda *eval_(struct lambda *l,const struct context *const D) {
+    if (!l) return NULL;
+    switch(l->t) {
+        case LAMBDA_ATOM:
+            l=expand(l,D);
+            break;
+        case LAMBDA_ABSTR: {
             struct lambda *old_l=l;
             l=eta(l);
-            if (old_l==l) l->abstr.expr=eval(l->abstr.expr,D);
-            else l=eval(l,D);
+            if (old_l==l) l->abstr.expr=eval_(l->abstr.expr,D);
+            else l=eval_(l,D);
             break;
         }
         case LAMBDA_APPL: {
+            //printf("appl:"); printnode(l); putchar('\n');
             struct lambda *old_l=l;
+            l->appl.lhs=expand(l->appl.lhs,D);
             if (l->appl.overtype) { //we have types checked in infertype;
                 //if (!(l->appl.lhs && l->appl.lhs->t==LAMBDA_ABSTR && !l->appl.lhs->abstr.overtype)) return NULL;
                 struct lambda *lhs=l->appl.lhs;
-                destroytype(l->appl.rhs.t);
-                printf("pre-i:%d && %d\n",lhs->t==LAMBDA_ABSTR, lhs->abstr.overtype);
                 if (lhs->t==LAMBDA_ABSTR && lhs->abstr.overtype) {
-                    printf("i\n");
-                    struct lambda *lhs_expr=lhs->abstr.expr;
+                    struct lambda *lhs_expr=applytype(lhs->abstr.expr,l->appl.rhs.t,D,1);
+                    destroytype(l->appl.rhs.t);
                     free(lhs->abstr.v);
                     destroytype(lhs->abstr.type);
                     free(lhs);
                     lhs=lhs_expr;
-                }
+                } else destroytype(l->appl.rhs.t);
                 free(l);
                 l=lhs;
             } else {
-                printf("  appl\n");
                 l=beta(l);
+                //if (old_l!=l) l=eval_(l,D);
             }
-            if (old_l==l) {
-                l->appl.lhs=eval(l->appl.lhs,D);
-                if (!l->appl.overtype) l->appl.rhs.l=eval(l->appl.rhs.l,D);
+            if (old_l==l) { //keine beta-reduction
+                l->appl.lhs=eval_(l->appl.lhs,D);
+                if (!l->appl.overtype) l->appl.rhs.l=eval_(l->appl.rhs.l,D);
             } else {
-                l=eval(l,D);
-                printf("  !ot\n");
+                l=eval_(l,D);
             }
             break;
         }
         default: return NULL;
     }
+    return l;
+}
+
+struct lambda *eval(struct lambda *l,const struct context *const D) {
+    while(l->t!=LAMBDA_ABSTR) l=eval_(l,D);
     return l;
 }
 #if 0

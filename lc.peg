@@ -9,7 +9,7 @@
     #include "type.h"
     #include "debruijn.h"
     #include "eval.h"
-    extern struct type *infertype(struct lambda *,struct context *D);
+    #include "infertype.h"
 
     struct ctx {
         struct debruijn db;
