@@ -137,6 +137,32 @@ struct lambda *applytype(struct lambda *l,struct type *t,const struct context *c
 
 }
 
+bool beta_eta(struct lambda *l) {
+    if (!l) return false;
+    if (l->t==LAMBDA_APPL && !l->appl.overtype) {
+        if (l->appl.lhs && l->appl.lhs->t==LAMBDA_ABSTR && !l->appl.lhs->abstr.overtype) {
+            return true;
+        }
+    } else if (l->t==LAMBDA_ABSTR && !l->abstr.overtype) {
+        if (l->abstr.expr && l->abstr.expr->t==LAMBDA_APPL && !l->abstr.expr->appl.overtype) {
+            if (l->abstr.expr->appl.rhs.l && l->abstr.expr->appl.rhs.l->t==LAMBDA_ATOM
+                && l->abstr.expr->appl.rhs.l->atom.index==1) {
+                return true;
+            }
+        }
+    }// else {
+        switch (l->t) {
+            case LAMBDA_ATOM:
+                return !l->atom.index;
+            case LAMBDA_ABSTR:
+                return beta_eta(l->abstr.expr);
+            case LAMBDA_APPL:
+                return beta_eta(l->appl.lhs) || l->appl.overtype?true:beta_eta(l->appl.rhs.l);
+            default: return false;
+        }
+    //}
+}
+
 struct lambda *eval_(struct lambda *l,const struct context *const D) {
     if (!l) return NULL;
     switch(l->t) {
@@ -144,6 +170,7 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
             l=expand(l,D);
             break;
         case LAMBDA_ABSTR: {
+           //         printf("b");
             struct lambda *old_l=l;
             l=eta(l);
             if (old_l==l) l->abstr.expr=eval_(l->abstr.expr,D);
@@ -169,7 +196,8 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
                 l=lhs;
             } else {
                 l=beta(l);
-                //if (old_l!=l) l=eval_(l,D);
+                if (old_l!=l) l=eval_(l,D);
+                //if (l && l->t==LAMBDA_ABSTR) l->abstr.expr=eval_(l->abstr.expr,D);
             }
             if (old_l==l) { //keine beta-reduction
                 l->appl.lhs=eval_(l->appl.lhs,D);
@@ -185,6 +213,8 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
 }
 
 struct lambda *eval(struct lambda *l,const struct context *const D) {
-    while(l->t!=LAMBDA_ABSTR) l=eval_(l,D);
+    printf("begin:%d\n",beta_eta(l));
+    while(beta_eta(l)) l=eval_(l,D);
+    printf("end:%d\n",beta_eta(l));
     return l;
 }
