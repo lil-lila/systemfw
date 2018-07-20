@@ -6,6 +6,31 @@
 #include "context.h"
 #include "infertype.h"
 
+struct lambda *shift(struct lambda *where,int with) {
+    if (!where) return NULL;
+    switch(where->t) {
+        case LAMBDA_ATOM:
+            if (where->atom.index!=0) {
+                where->atom.index+=with;
+            }
+            return where;
+        case LAMBDA_APPL:
+            where->appl.lhs=shift(where->appl.lhs,with);
+            if (!where->appl.overtype)
+                where->appl.rhs.l=shift(where->appl.rhs.l,with);
+            // else do nothing;
+            return where;
+            break;
+        case LAMBDA_ABSTR:
+            where->abstr.expr=shift(where->abstr.expr,with+1);
+            return where;
+            break;
+        default:
+            break;
+    };
+    return where;
+}
+
 struct lambda *substitute(struct lambda *where,struct lambda *with,int atindex) {
     if (!where || !with) return NULL;
     switch(where->t) {
@@ -81,17 +106,12 @@ struct lambda *applytype(struct lambda *l,struct type *t,const struct context *c
         case LAMBDA_ATOM:
             break;
         case LAMBDA_ABSTR: {
-            //printf("A\n");
             int ni=atindex;
-            if (!l->abstr.overtype) {
-                //printf("   %d;",l->abstr.type==0);printtype(l->abstr.type); putchar('\n');
-                l->abstr.type=subtype(l->abstr.type,t,atindex);
-                //printf("   %d;",l->abstr.type==0);printtype(l->abstr.type); putchar('\n');
-            }
+            if (!l->abstr.overtype) l->abstr.type=subtype(l->abstr.type,t,atindex);
             else ni++;
             l->abstr.expr=applytype(l->abstr.expr,t,D,ni);
             break;
-                           }
+        }
         case LAMBDA_APPL:
             l->appl.lhs=applytype(l->appl.lhs,t,D,atindex);
             if (!l->appl.overtype) l->appl.rhs.l=applytype(l->appl.rhs.l,t,D,atindex);
@@ -110,17 +130,16 @@ bool reducible(struct lambda *l) {
         if (l->appl.lhs && l->appl.lhs->t==LAMBDA_ABSTR && !l->appl.lhs->abstr.overtype) {
             return true;
         }
-    }// else {
-        switch (l->t) {
-            case LAMBDA_ATOM:
-                return !l->atom.index;
-            case LAMBDA_ABSTR:
-                return reducible(l->abstr.expr);
-            case LAMBDA_APPL:
-                return reducible(l->appl.lhs) && l->appl.overtype?false:reducible(l->appl.rhs.l);
-            default: return false;
-        }
-    //}
+    }
+    switch (l->t) {
+        case LAMBDA_ATOM:
+            return !l->atom.index;
+        case LAMBDA_ABSTR:
+            return reducible(l->abstr.expr);
+        case LAMBDA_APPL:
+            return reducible(l->appl.lhs) && l->appl.overtype?false:reducible(l->appl.rhs.l);
+        default: return false;
+    }
 }
 
 struct lambda *eval_(struct lambda *l,const struct context *const D) {
@@ -130,7 +149,6 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
             l=expand(l,D);
             break;
         case LAMBDA_ABSTR: {
-           //         printf("b");
             l->abstr.expr=eval_(l->abstr.expr,D);
             break;
         }
