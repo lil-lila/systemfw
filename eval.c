@@ -32,39 +32,6 @@ struct lambda *substitute(struct lambda *where,struct lambda *with,int atindex) 
     return where;
 }
 
-bool reducible(struct lambda *ast) {
-    if (!ast) return false;
-    if (ast->t==LAMBDA_ATOM) return ast->atom.index==0;
-    else if (ast->t==LAMBDA_ABSTR && !reducible(ast->abstr.expr)) return false;
-    else if (ast->t==LAMBDA_APPL) {
-        if (ast->appl.lhs->t==LAMBDA_ABSTR) {
-            if (ast->appl.overtype == ast->appl.lhs->abstr.overtype) return true;
-            else return false;
-        }
-        else reducible(ast->appl.lhs) || (!ast->appl.overtype && reducible(ast->appl.rhs.l));
-    }
-    return false;//return reducible(ast->abstr.expr);
-}
-
-struct lambda *eta(struct lambda *l) {
-    if (!l) return NULL;
-    if (l->t==LAMBDA_ABSTR && !l->abstr.overtype) {
-        if (l->abstr.expr && l->abstr.expr->t==LAMBDA_APPL && !l->abstr.expr->appl.overtype) {
-            if (l->abstr.expr->appl.rhs.l && l->abstr.expr->appl.rhs.l->t==LAMBDA_ATOM
-                && l->abstr.expr->appl.rhs.l->atom.index==1) {
-                struct lambda *r=l->abstr.expr->appl.lhs;
-                destroynode(l->abstr.expr->appl.rhs.l);
-                free(l->abstr.expr);
-                destroytype(l->abstr.type);
-                free(l->abstr.v);
-                free(l);
-                return r;
-            }
-        }
-    }
-    return l;
-}
-
 struct lambda *beta(struct lambda *l) {
     if (!l) return NULL;
     if (l->t==LAMBDA_APPL && !l->appl.overtype) {
@@ -137,27 +104,20 @@ struct lambda *applytype(struct lambda *l,struct type *t,const struct context *c
 
 }
 
-bool beta_eta(struct lambda *l) {
+bool reducible(struct lambda *l) {
     if (!l) return false;
     if (l->t==LAMBDA_APPL && !l->appl.overtype) {
         if (l->appl.lhs && l->appl.lhs->t==LAMBDA_ABSTR && !l->appl.lhs->abstr.overtype) {
             return true;
-        }
-    } else if (l->t==LAMBDA_ABSTR && !l->abstr.overtype) {
-        if (l->abstr.expr && l->abstr.expr->t==LAMBDA_APPL && !l->abstr.expr->appl.overtype) {
-            if (l->abstr.expr->appl.rhs.l && l->abstr.expr->appl.rhs.l->t==LAMBDA_ATOM
-                && l->abstr.expr->appl.rhs.l->atom.index==1) {
-                return true;
-            }
         }
     }// else {
         switch (l->t) {
             case LAMBDA_ATOM:
                 return !l->atom.index;
             case LAMBDA_ABSTR:
-                return beta_eta(l->abstr.expr);
+                return reducible(l->abstr.expr);
             case LAMBDA_APPL:
-                return beta_eta(l->appl.lhs) || l->appl.overtype?true:beta_eta(l->appl.rhs.l);
+                return reducible(l->appl.lhs) && l->appl.overtype?false:reducible(l->appl.rhs.l);
             default: return false;
         }
     //}
@@ -171,10 +131,7 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
             break;
         case LAMBDA_ABSTR: {
            //         printf("b");
-            struct lambda *old_l=l;
-            l=eta(l);
-            if (old_l==l) l->abstr.expr=eval_(l->abstr.expr,D);
-            else l=eval_(l,D);
+            l->abstr.expr=eval_(l->abstr.expr,D);
             break;
         }
         case LAMBDA_APPL: {
@@ -191,9 +148,9 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
                     destroytype(lhs->abstr.type);
                     free(lhs);
                     lhs=lhs_expr;
-                } else destroytype(l->appl.rhs.t);
-                free(l);
-                l=lhs;
+                    free(l);
+                    l=lhs;
+                }// else destroytype(l->appl.rhs.t);
             } else {
                 l=beta(l);
                 if (old_l!=l) l=eval_(l,D);
@@ -213,8 +170,8 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
 }
 
 struct lambda *eval(struct lambda *l,const struct context *const D) {
-    printf("begin:%d\n",beta_eta(l));
-    while(beta_eta(l)) l=eval_(l,D);
-    printf("end:%d\n",beta_eta(l));
+    //printf("begin:%d\n",reducible(l));
+    while(reducible(l)) l=eval_(l,D);
+    //printf("end:%d\n",reducible(l));
     return l;
 }
