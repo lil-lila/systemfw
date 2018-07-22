@@ -133,11 +133,11 @@ bool reducible(struct lambda *l) {
     }
     switch (l->t) {
         case LAMBDA_ATOM:
-            return !l->atom.index;
+            return l->atom.index==0;
         case LAMBDA_ABSTR:
             return reducible(l->abstr.expr);
         case LAMBDA_APPL:
-            return reducible(l->appl.lhs) && l->appl.overtype?false:reducible(l->appl.rhs.l);
+            return reducible(l->appl.lhs) || (l->appl.overtype?false:reducible(l->appl.rhs.l));
         default: return false;
     }
 }
@@ -155,7 +155,7 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
         case LAMBDA_APPL: {
             //printf("appl:"); printnode(l); putchar('\n');
             struct lambda *old_l=l;
-            l->appl.lhs=expand(l->appl.lhs,D);
+            l->appl.lhs=eval_(l->appl.lhs,D); //expand(l->appl.lhs,D);
             if (l->appl.overtype) { //we have types checked in infertype;
                 //if (!(l->appl.lhs && l->appl.lhs->t==LAMBDA_ABSTR && !l->appl.lhs->abstr.overtype)) return NULL;
                 struct lambda *lhs=l->appl.lhs;
