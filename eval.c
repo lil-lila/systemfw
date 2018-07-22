@@ -6,23 +6,23 @@
 #include "context.h"
 #include "infertype.h"
 
-struct lambda *shift(struct lambda *where,int with) {
+struct lambda *shift(struct lambda *where,int with,int atindex) {
     if (!where) return NULL;
     switch(where->t) {
         case LAMBDA_ATOM:
-            if (where->atom.index!=0) {
+            if (where->atom.index>atindex) {
                 where->atom.index+=with;
             }
             return where;
         case LAMBDA_APPL:
-            where->appl.lhs=shift(where->appl.lhs,with);
+            where->appl.lhs=shift(where->appl.lhs,with,atindex);
             if (!where->appl.overtype)
-                where->appl.rhs.l=shift(where->appl.rhs.l,with);
+                where->appl.rhs.l=shift(where->appl.rhs.l,with,atindex);
             // else do nothing;
             return where;
             break;
         case LAMBDA_ABSTR:
-            where->abstr.expr=shift(where->abstr.expr,with+1);
+            where->abstr.expr=shift(where->abstr.expr,with+1,atindex+(where->abstr.overtype?0:1));
             return where;
             break;
         default:
@@ -37,7 +37,7 @@ struct lambda *substitute(struct lambda *where,struct lambda *with,int atindex) 
         case LAMBDA_ATOM:
             if (where->atom.index==atindex) {
                 destroynode(where);
-                return dupnode(with);
+                return shift(dupnode(with),atindex-1,0);
             } else return where;
             break;
         case LAMBDA_APPL:
@@ -67,7 +67,7 @@ struct lambda *beta(struct lambda *l) {
             destroytype(l->appl.lhs->abstr.type);
             free(l->appl.lhs);
             free(l);
-            l = substitute(lhs_expr, rhs, 1);
+            l = shift(substitute(lhs_expr, rhs, 1),-1,1);
             destroynode(rhs);
         }
     }
