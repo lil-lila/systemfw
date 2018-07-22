@@ -48,7 +48,7 @@ struct lambda *substitute(struct lambda *where,struct lambda *with,int atindex) 
             return where;
             break;
         case LAMBDA_ABSTR:
-            where->abstr.expr=substitute(where->abstr.expr,with,atindex+1);
+            where->abstr.expr=substitute(where->abstr.expr,with,atindex+(where->abstr.overtype?0:1));
             return where;
             break;
         default:
