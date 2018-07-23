@@ -38,3 +38,5 @@ term1=/\a.\x:∀X.X->X.x[a->a] x[a];
 2=/\X.\f:X->X.\x:X.f(f x);
 ?=2;
 ?=\f:\/a.(a->b->a)./\a.\x:a.f[b->a](f[a]x);
+E=/\T.\q:(\/X.X->X)->T.q (/\X.\x:X.x);
+?=E;
