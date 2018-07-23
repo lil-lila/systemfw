@@ -124,6 +124,7 @@ struct lambda *applytype(struct lambda *l,struct type *t,const struct context *c
 
 }
 
+#if 0
 bool reducible(struct lambda *l) {
     if (!l) return false;
     if (l->t==LAMBDA_APPL && !l->appl.overtype) {
@@ -141,6 +142,7 @@ bool reducible(struct lambda *l) {
         default: return false;
     }
 }
+#endif
 
 struct lambda *eval_(struct lambda *l,const struct context *const D) {
     if (!l) return NULL;
@@ -189,7 +191,7 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
 
 struct lambda *eval(struct lambda *l,const struct context *const D) {
     //printf("begin:%d\n",reducible(l));
-    while(reducible(l)) l=eval_(l,D);
+    /*while(reducible(l))*/ l=eval_(l,D);
     //printf("end:%d\n",reducible(l));
     return l;
 }
