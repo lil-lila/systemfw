@@ -62,8 +62,15 @@ struct type *infertype(struct lambda *l,struct context *D) {
             }
         case LAMBDA_ABSTR: {
                 if (l->abstr.overtype) { // /\a:*.T:B : \/a.B
-                    struct type *t=expandtype(infertype(l->abstr.expr,D),D);
+                    struct type *it=infertype(l->abstr.expr,D);
+                    if (!it) return NULL;
+                    struct type *t=expandtype(it,D);
                     struct type *s=type_poly(strdup(l->abstr.v),t);
+                    if (!s || !t) {
+                        destroytype(s);
+                        destroytype(t);
+                        return NULL;
+                    }
                     return s;
                 } else { // \x:s.T:t : s->t
                     struct type *s=expandtype(duptype(l->abstr.type),D);
@@ -75,7 +82,11 @@ struct type *infertype(struct lambda *l,struct context *D) {
                     }
                     struct type *t=expandtype(infertype(l->abstr.expr,D),D);
                     context_deleteterm(D,l->abstr.v);
-                    if (!s || !t) return NULL;
+                    if (!s || !t) {
+                        destroytype(s);
+                        destroytype(t);
+                        return NULL;
+                    }
                     s=type_function(s,t);
                     return s;
                 }

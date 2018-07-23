@@ -96,7 +96,7 @@ atom        <- ID:ID {
                         $$.l->atom.index=indexof(&auxil->db,ID.s);
                      }
              / LP T:term RP {$$=T;}
-ID          <- _ <[A-Za-z_+][A-Za-z0-9_+]*> _ {
+ID          <- _ <[A-Za-z0-9_+][A-Za-z0-9_+]*> _ {
                                                 $$.s=strdup($1);
                                                 if (!$$.s) PCC_ERROR(auxil);
                                               }
