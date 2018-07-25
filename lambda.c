@@ -4,6 +4,7 @@
 #include "lambda.h"
 
 struct lambda *dupnode(struct lambda *l) {
+    if (!l) return NULL;
     struct lambda *lc=(struct lambda *)malloc(sizeof(struct lambda));
     if (!lc) return NULL;
     switch(lc->t=l->t) {

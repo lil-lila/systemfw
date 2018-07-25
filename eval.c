@@ -80,7 +80,7 @@ struct lambda *expand(struct lambda *lc,const struct context *const D) {
         case LAMBDA_ATOM:
             if (lc->atom.index==0) {
                 struct contextrecord *r=context_findterm(D,lc->atom.s);
-                if (r) {
+                if (r && r->expr) {
                     destroynode(lc);
                     lc=expand(dupnode(r->expr),D);
                 }
