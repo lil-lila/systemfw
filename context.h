@@ -1,6 +1,10 @@
 #ifndef __CONTEXT_
 #define __CONTEXT_
 
+#include "kind.h"
+#include "type.h"
+#include "lambda.h"
+
 struct context {
     //int size,typesize;
     struct contextrecord {
@@ -12,6 +16,7 @@ struct context {
     struct typerecord {
         char *name;
         struct type *t;
+        struct kind *k;
         struct typerecord *prev;
     } *typelist;
 };

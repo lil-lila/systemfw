@@ -7,6 +7,7 @@
     #include "context.h" 
     #include "lambda.h" 
     #include "type.h"
+    #include "kind.h"
     #include "debruijn.h"
     #include "eval.h"
     #include "infertype.h"
@@ -20,6 +21,7 @@
     union lt {
         struct lambda *l;
         struct type *t;
+        struct kind *k;
         char *s;
     };
 
@@ -49,6 +51,7 @@
     }
 }
 
+#main
 main        <- S:sentence {/*$$=S;*/} (SEP S:sentence {/*$$=S;*/})* SEP?
 sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
              / ID:ID EQUAL _ ':' _ T:tterm {context_addterm(&auxil->ctx,ID.s,T.t,NULL); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
@@ -58,6 +61,7 @@ sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); /
                                    printf(" eval:"); printnode(l=eval(T.l,&auxil->ctx)); putchar('\n');
                                    destroynode(l); destroytype(t);/*$$=T;*/}
              / _ ':' ID:ID EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
+#term
 term        <- (T:application / T:abstraction) {$$=T;}
 abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || context_findterm(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);} #forced Church style to allow type inference
                             DOT T:term {
@@ -70,7 +74,7 @@ abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || contex
                                         $$.l->abstr.type=TID.t;
                                         $$.l->abstr.expr=T.l;
                                       }
-             / UCLAMBDA ID:ID (OF K:tkind)? {if (indexof(&auxil->type_db,ID.s) /* || context_findtype(auxil->ctx,ID.s)*/) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
+             / UCLAMBDA ID:ID (OF K:kind)? {if (indexof(&auxil->type_db,ID.s) /* || context_findtype(auxil->ctx,ID.s)*/) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
                                DOT T:term {
                                             debruijn_pop(&auxil->type_db);
                                             $$.l=(struct lambda *)malloc(sizeof(struct lambda));
@@ -97,23 +101,35 @@ atom        <- ID:ID {
                         $$.l->atom.index=indexof(&auxil->db,ID.s);
                      }
              / LP T:term RP {$$=T;}
-ID          <- _ <[A-Za-z0-9_+][A-Za-z0-9_+]*> _ {
-                                                $$.s=strdup($1);
-                                                if (!$$.s) PCC_ERROR(auxil);
-                                              }
-tkind       <- UKIND
-tterm       <- T:tatom {$$=T;} (ARROW S:tterm {$$.t=type_function(T.t,S.t);})?
+#kind
+kind        <- TA:katom {$$=TA;} (ARROW S:kind {$$.k=kind_function($$.k,S.k);})?
+katom       <- TU:UKIND {$$.k=mkkind(KIND_PROP,0);}
+             / LP TT:kind RP {$$=TT;}
+#type
+tterm       <- (T:tarrow / T:tabstr) {$$=T;}
+tarrow      <- (T:tappl {$$=T;}) (ARROW S:tarrow {$$.t=type_function(T.t,S.t);})?
+tappl       <- T:tatom {$$=T;} (T:tatom {$$.t=type_appl($$.t,T.t);})*
+tabstr      <- LAMBDA ID:ID (OF K:kind)? {if (indexof(&auxil->type_db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
+                             DOT T:tterm {
+                                            debruijn_pop(&auxil->type_db);
+                                            $$.t=type_abstr(ID.s,T.t);
+                                         }
 tatom       <- ID:ID {
                     $$.t=mktype(TYPE_NAME,ID.s,0);
                     $$.t->index=indexof(&auxil->type_db,ID.s);
                     if (!$$.t) PCC_ERROR(auxil);
                 }
              / LP T:tterm RP {$$=T;}
-             / FORALL ID:ID (OF K:tkind)? {if (indexof(&auxil->type_db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
+             / FORALL ID:ID (OF K:kind)? {if (indexof(&auxil->type_db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
                              DOT T:tterm {
                                             debruijn_pop(&auxil->type_db);
                                             $$.t=type_poly(ID.s,T.t);
                                          }
+#common
+ID          <- _ <[A-Za-z0-9_+][A-Za-z0-9_+]*> _ {
+                                                $$.s=strdup($1);
+                                                if (!$$.s) PCC_ERROR(auxil);
+                                              }
 UCLAMBDA    <- _ ('/\\' / '\u039b') _
 UKIND       <- _ '*' _
 FORALL      <- _ ('\\/' / '\u2200') _

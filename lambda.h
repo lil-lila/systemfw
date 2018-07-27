@@ -24,7 +24,10 @@ struct lambda {
         struct abstr {
             bool overtype;
             char *v;
-            struct type *type;
+            union {
+                struct type *type;
+                struct kind *kind;
+            };
             struct lambda *expr;
         } abstr;
     };

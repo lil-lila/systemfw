@@ -9,6 +9,7 @@ struct type *mktype(enum ttype type,char *name,int arity/*,struct type **args*/)
     t->t=type;
     t->name=name;
     t->arity=arity;
+    t->kind=NULL;
     t->args[0]=NULL;
     t->args[1]=NULL;
     return t;
@@ -21,6 +22,13 @@ struct type *type_function(struct type *in,struct type *out) {
     return t;
 }
 
+struct type *type_appl(struct type *in,struct type *out) {
+    struct type *t=mktype(TYPE_APPL,NULL,2);
+    t->args[0]=in;
+    t->args[1]=out;
+    return t;
+}
+
 struct type *type_var(char *name) {
     struct type *t=mktype(TYPE_VARIABLE,name,0);
     return t;
@@ -28,6 +36,12 @@ struct type *type_var(char *name) {
 
 struct type *type_poly(char *name,struct type *e) {
     struct type *t=mktype(TYPE_POLY,name,1);
+    t->args[0]=e;
+    return t;
+}
+
+struct type *type_abstr(char *name,struct type *e) {
+    struct type *t=mktype(TYPE_ABSTR,name,1);
     t->args[0]=e;
     return t;
 }
@@ -56,13 +70,23 @@ void printtype(struct type *t) {
             printtype(t->args[1]);
             printf(")");
             break;
-        /*case TYPE_PAIR:
-            printf("(");
+        case TYPE_ABSTR:
+            printf("\\%s:",t->name);
+            //printkind(t->kind);
+            putchar('.');
+            if (t->args[0] && t->args[0]->t==TYPE_APPL) putchar('(');
             printtype(t->args[0]);
-            printf(" * ");
+            if (t->args[0] && t->args[0]->t==TYPE_APPL) putchar(')');
+            break;
+        case TYPE_APPL:
+            if (t->args[0] && t->args[0]->t==TYPE_ABSTR) putchar('(');
+            printtype(t->args[0]);
+            if (t->args[0] && t->args[0]->t==TYPE_ABSTR) putchar(')');
+            putchar(' ');
+            if (t->args[1] && t->args[1]->t!=TYPE_NAME) putchar('(');
             printtype(t->args[1]);
-            printf(")");
-            break;*/
+            if (t->args[1] && t->args[1]->t!=TYPE_NAME) putchar(')');
+            break;
         default: fprintf(stderr, "unknown type\n"); break;
     }
 }
