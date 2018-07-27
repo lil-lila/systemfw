@@ -55,79 +55,79 @@ struct type *infertype(struct lambda *l,struct context *D) {
     //printf("   TN:"); printnode(l); putchar('\n');
     switch(l->t) {
         case LAMBDA_ATOM: {
-                struct contextrecord *r = context_findterm(D,l->atom.s);
-                if (!r) return NULL;
-                if (!r->t) r->t=expandtype(infertype(r->expr,D),D);
-                return duptype(r->t);
-            }
+            struct contextrecord *r = context_findterm(D,l->atom.s);
+            if (!r) return NULL;
+            if (!r->t) r->t=expandtype(infertype(r->expr,D),D);
+            return duptype(r->t);
+        }
         case LAMBDA_ABSTR: {
-                if (l->abstr.overtype) { // /\a:*.T:B : \/a.B
-                    struct type *it=infertype(l->abstr.expr,D);
-                    if (!it) return NULL;
-                    struct type *t=expandtype(it,D);
-                    struct type *s=type_poly(strdup(l->abstr.v),t,mkkind(KIND_PROP,0));
-                    if (!s || !t) {
-                        destroytype(s);
-                        destroytype(t);
-                        return NULL;
-                    }
-                    return s;
-                } else { // \x:s.T:t : s->t
-                    struct type *s=expandtype(duptype(l->abstr.type),D);
-                    if (l->abstr.type) context_addterm(D,l->abstr.v,s,NULL);
-                    else {
-                        context_deleteterm(D,l->abstr.v);
-                        destroytype(s);
-                        return NULL;
-                    }
-                    struct type *t=expandtype(infertype(l->abstr.expr,D),D);
-                    context_deleteterm(D,l->abstr.v);
-                    if (!s || !t) {
-                        destroytype(s);
-                        destroytype(t);
-                        return NULL;
-                    }
-                    s=type_function(s,t);
-                    return s;
+            if (l->abstr.overtype) { // /\a:*.T:B : \/a.B
+                struct type *it=infertype(l->abstr.expr,D);
+                if (!it) return NULL;
+                struct type *t=expandtype(it,D);
+                struct type *s=type_poly(strdup(l->abstr.v),t,mkkind(KIND_PROP,0));
+                if (!s || !t) {
+                   destroytype(s);
+                   destroytype(t);
+                   return NULL;
                 }
+                return s;
+            } else { // \x:s.T:t : s->t
+                struct type *s=expandtype(duptype(l->abstr.type),D);
+                if (l->abstr.type) context_addterm(D,l->abstr.v,s,NULL);
+                else {
+                    context_deleteterm(D,l->abstr.v);
+                    destroytype(s);
+                    return NULL;
+                }
+                struct type *t=expandtype(infertype(l->abstr.expr,D),D);
+                context_deleteterm(D,l->abstr.v);
+                if (!s || !t) {
+                    destroytype(s);
+                    destroytype(t);
+                    return NULL;
+                }
+                s=type_function(s,t);
+                return s;
             }
+        }
         case LAMBDA_APPL: {
-                if (l->appl.overtype) { // Г |-t:\/a.B ===> Г|-t[A]:B{a:=A}
-                    struct type *t1=expandtype(infertype(l->appl.lhs,D),D);
-                    struct type *t2=expandtype(duptype(l->appl.rhs.t),D);
-                    if (t1 && t1->t==TYPE_POLY) {
-                        struct type *s=subtype(t1->args[0],t2,1);
-                        destroytype(t2);
-                        free(t1->name);
-                        destroykind(t1->kind);
-                        free(t1);
-                        return s;
-                    } else {
-                        destroytype(t1);
-                        destroytype(t2);
-                        return NULL;
-                    }
-                } else { // Г |- t:A->B,u:A ===> Г|-tu:B
-                    struct type *lhst=expandtype(infertype(l->appl.lhs,D),D);
-                    struct type *rhst=expandtype(infertype(l->appl.rhs.l,D),D);
-                    if (!lhst || !rhst) {
-                        destroytype(lhst);
-                        destroytype(rhst);
-                        return NULL;
-                    }
-                    struct type *result=type_var(NULL);
-                    struct type *tf=type_function(rhst,result);
-                    bool r=unify(tf,lhst);
-                    struct type *t=NULL;
-                    if (r && result) t=duptype(result->args[0]);
+            if (l->appl.overtype) { // Г |-t:\/a.B ===> Г|-t[A]:B{a:=A}
+                struct type *t1=expandtype(infertype(l->appl.lhs,D),D);
+                struct type *t2=expandtype(duptype(l->appl.rhs.t),D);
+                if (t1 && t1->t==TYPE_POLY) {
+                    struct type *s=subtype(t1->args[0],t2,1);
+                    destroytype(t2);
+                    free(t1->name);
+                    destroykind(t1->kind);
+                    free(t1);
+                    return s;
+                } else {
+                    destroytype(t1);
+                    destroytype(t2);
+                    return NULL;
+                }
+            } else { // Г |- t:A->B,u:A ===> Г|-tu:B
+                struct type *lhst=expandtype(infertype(l->appl.lhs,D),D);
+                struct type *rhst=expandtype(infertype(l->appl.rhs.l,D),D);
+                if (!lhst || !rhst) {
                     destroytype(lhst);
                     destroytype(rhst);
-                    free(tf);
-                    free(result);
-                    //printf("result: %d\n",r);
-                    return t;
+                    return NULL;
                 }
+                struct type *result=type_var(NULL);
+                struct type *tf=type_function(rhst,result);
+                bool r=unify(tf,lhst);
+                struct type *t=NULL;
+                if (r && result) t=duptype(result->args[0]);
+                destroytype(lhst);
+                destroytype(rhst);
+                free(tf);
+                free(result);
+                //printf("result: %d\n",r);
+                return t;
             }
+        }
         default: return NULL;
     }
 }

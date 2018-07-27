@@ -11,6 +11,7 @@
     #include "debruijn.h"
     #include "eval.h"
     #include "infertype.h"
+    #include "inferkind.h"
 
     struct ctx {
         struct debruijn db;
@@ -68,10 +69,11 @@ sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); /
                                    printf(" type:"); printtype(t=infertype(T.l,&auxil->ctx)); putchar('\n');
                                    printf(" eval:"); printnode(l=eval(T.l,&auxil->ctx)); putchar('\n');
                                    destroynode(l); destroytype(t);/*$$=T;*/}
-             / OF ID:ID (OF K:kind)? EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t,implicit_kind(K,auxil)); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
+             / OF ID:ID EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t,NULL); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
+             / OF '?' _ EQUAL T:tterm {struct kind *k; printkind(k=inferkind(T.t,&auxil->ctx)); putchar('\n'); destroykind(k); destroytype(T.t); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
 #term
 term        <- (T:application / T:abstraction) {$$=T;}
-abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || context_findterm(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);} #forced Church style to allow type inference
+abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || context_findterm(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);}
                             DOT T:term {
                                         debruijn_pop(&auxil->db);
                                         $$.l=(struct lambda *)malloc(sizeof(struct lambda));
@@ -82,7 +84,7 @@ abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || contex
                                         $$.l->abstr.type=TID.t;
                                         $$.l->abstr.expr=T.l;
                                       }
-             / UCLAMBDA ID:ID (OF K:kind)? {if (indexof(&auxil->type_db,ID.s) /* || context_findtype(auxil->ctx,ID.s)*/) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
+             / UCLAMBDA ID:ID (OF K:kind)? {if (indexof(&auxil->type_db,ID.s) || context_findtype(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}
                                DOT T:term {
                                             debruijn_pop(&auxil->type_db);
                                             $$.l=(struct lambda *)malloc(sizeof(struct lambda));
@@ -114,7 +116,7 @@ kind        <- TA:katom {$$=TA;} (ARROW S:kind {$$.k=kind_function($$.k,S.k);})?
 katom       <- TU:UKIND {$$.k=mkkind(KIND_PROP,0);}
              / LP TT:kind RP {$$=TT;}
 #type
-tterm       <- (T:tarrow / T:tabstr) {$$=T;}
+tterm       <- (T:tarrow / T:tabstr) {$$=T;printtype(T.t);putchar('\n');}
 tarrow      <- (T:tappl {$$=T;}) (ARROW S:tarrow {$$.t=type_function(T.t,S.t);})?
 tappl       <- T:tatom {$$=T;} (T:tatom {$$.t=type_appl($$.t,T.t);})*
 tabstr      <- LAMBDA ID:ID (OF K:kind)? {if (indexof(&auxil->type_db,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->type_db,ID.s);}

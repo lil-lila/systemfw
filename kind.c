@@ -59,6 +59,19 @@ void destroykind(struct kind *t) {
     free(t);
 }
 
+bool cmpkind(struct kind *t1,struct kind *t2) {
+    if ((t1 && !t2) || (!t1 && t2)) return false;
+    if (t1 == t2) return true;
+    if (t1->t==t2->t) {
+        switch(t1->t) {
+            case KIND_PROP: return true;
+            case KIND_FUNCTION:
+                return cmpkind(t1->args[0],t2->args[0]) && cmpkind(t1->args[1],t2->args[1]);
+            default: return false;
+        }
+    } else return false;
+}
+
 struct kind *dupkind(struct kind *t) {
     if (!t) return NULL;
     struct kind *nt=mkkind(t->t,t->arity);
