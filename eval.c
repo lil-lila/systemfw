@@ -165,7 +165,7 @@ struct lambda *eval_(struct lambda *l,const struct context *const D) {
                     struct lambda *lhs_expr=applytype(lhs->abstr.expr,l->appl.rhs.t,D,1);
                     destroytype(l->appl.rhs.t);
                     free(lhs->abstr.v);
-                    destroytype(lhs->abstr.type);
+                    destroykind(lhs->abstr.kind);
                     free(lhs);
                     lhs=lhs_expr;
                     free(l);

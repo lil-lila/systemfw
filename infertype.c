@@ -65,7 +65,7 @@ struct type *infertype(struct lambda *l,struct context *D) {
                     struct type *it=infertype(l->abstr.expr,D);
                     if (!it) return NULL;
                     struct type *t=expandtype(it,D);
-                    struct type *s=type_poly(strdup(l->abstr.v),t);
+                    struct type *s=type_poly(strdup(l->abstr.v),t,mkkind(KIND_PROP,0));
                     if (!s || !t) {
                         destroytype(s);
                         destroytype(t);
@@ -99,6 +99,7 @@ struct type *infertype(struct lambda *l,struct context *D) {
                         struct type *s=subtype(t1->args[0],t2,1);
                         destroytype(t2);
                         free(t1->name);
+                        destroykind(t1->kind);
                         free(t1);
                         return s;
                     } else {

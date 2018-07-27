@@ -66,12 +66,13 @@ void context_destroy(struct context c) {
         struct typerecord *p=tcur->prev;
         free(tcur->name);
         destroytype(tcur->t);
+        destroykind(tcur->k);
         free(tcur);
         tcur=p;
     }
 }
 
-int context_addtype(struct context *c,char *n,struct type *t) {
+int context_addtype(struct context *c,char *n,struct type *t,struct kind *k) {
     struct typerecord *p=c->typelist;
     if (!c->typelist) c->typelist=(struct typerecord *)malloc(sizeof(struct typerecord));
     else {
@@ -82,6 +83,7 @@ int context_addtype(struct context *c,char *n,struct type *t) {
     c->typelist->prev=p;
     c->typelist->name=n;
     c->typelist->t=t;
+    c->typelist->k=k;
     return 1;
 }
 
@@ -118,44 +120,6 @@ struct type *fold(struct context *c,struct type *f) {
 
 }
 
-/*
-int context_addtype(struct context *c,char *n,struct type *t) {
-    if (!c->typesize || !c->typelist) c->typelist=(struct typerecord *)malloc((c->typesize=1)*sizeof(struct typerecord));
-    else {
-        if (context_findtype(c,n)) return 0;
-        c->typelist=(struct typerecord *)realloc(c->typelist,++c->typesize*sizeof(struct typerecord));
-    }
-    if (!c->typelist) return 0;
-    c->typelist[c->typesize-1].name=n;
-    c->typelist[c->typesize-1].t=t;
-    return 1;
-}
-
-struct typerecord *context_findtype(struct context *c,char *name) {
-    if (!c->typesize) return NULL;
-    for(int i=c->typesize-1;i>=0;i--) if (!strcmp(c->typelist[i].name,name)) return &c->typelist[i];
-    return NULL;
-
-}
-
-struct type *fold(struct context *c,struct type *f) {
-    if (!c) return NULL;
-    for(int i=c->typesize-1;i>=0;i--) if (cmptype(c->typelist[i].t,f)) return mktype(TYPE_NAME,c->typelist[i].name,0);
-    return NULL;
-
-}
-
-void context_deletetype(struct context *c,char *n) {
-    if (c && c->typelist)
-        for (int i=c->typesize-1;i>=0;i--)
-            if (!strcmp(c->typelist[i].name,n)) {
-                c->typelist[i]=c->typelist[c->typesize-1];
-                c->typelist=(struct typerecord *)realloc(c->typelist,--c->typesize*(sizeof(struct typerecord)));
-                return;
-            }
-    return;
-}
-*/
 void printcontext(struct context *c) {
     struct contextrecord *ccur=c->termlist;
     while (ccur) {
@@ -170,7 +134,8 @@ void printcontext(struct context *c) {
     struct typerecord *tcur=c->typelist;
     while (tcur) {
         struct typerecord *p=tcur->prev;
-        printf(":%s",tcur->name);
+        printf(":%s:",tcur->name);
+        printkind(tcur->k);
         printf(" = ");
         printtype(tcur->t);
         putchar('\n');

@@ -2,6 +2,7 @@
 #define __TYPE_
 
 #include <stdbool.h>
+#include "kind.h"
 
 enum ttype {
     /* type variable */
@@ -33,8 +34,8 @@ struct type *mktype(enum ttype,char *,int);
 struct type *type_function(struct type *,struct type *);
 struct type *type_appl(struct type *,struct type *);
 struct type *type_var(char *);
-struct type *type_poly(char *,struct type *);
-struct type *type_abstr(char *,struct type *);
+struct type *type_poly(char *,struct type *,struct kind *);
+struct type *type_abstr(char *,struct type *,struct kind *);
 void printtype(struct type *);
 struct type *duptype(struct type *);
 bool cmptype(struct type *,struct type *);

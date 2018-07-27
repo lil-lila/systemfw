@@ -47,7 +47,8 @@ void printkind(struct kind *t) {
 void destroykind(struct kind *t) {
     if (!t) return;
     switch (t->t) {
-        case KIND_VARIABLE: 
+        case KIND_VARIABLE:
+        case KIND_PROP:
             break;
         case KIND_FUNCTION:
             destroykind(t->args[0]);
@@ -56,6 +57,23 @@ void destroykind(struct kind *t) {
         default: break;
     }
     free(t);
+}
+
+struct kind *dupkind(struct kind *t) {
+    if (!t) return NULL;
+    struct kind *nt=mkkind(t->t,t->arity);
+    if (!nt) return NULL;
+    switch (t->t) {
+        case KIND_VARIABLE:
+        case KIND_PROP:
+            break;
+        case KIND_FUNCTION:
+            nt->args[0]=dupkind(t->args[0]);
+            nt->args[1]=dupkind(t->args[1]);
+            break;
+        default: break;
+    }
+    return nt;
 }
 /*int destroyterm(struct kind *t) {
     free(t->name);

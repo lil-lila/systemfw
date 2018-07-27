@@ -34,15 +34,17 @@ struct type *type_var(char *name) {
     return t;
 }
 
-struct type *type_poly(char *name,struct type *e) {
+struct type *type_poly(char *name,struct type *e,struct kind *k) {
     struct type *t=mktype(TYPE_POLY,name,1);
     t->args[0]=e;
+    t->kind=k;
     return t;
 }
 
-struct type *type_abstr(char *name,struct type *e) {
+struct type *type_abstr(char *name,struct type *e,struct kind *k) {
     struct type *t=mktype(TYPE_ABSTR,name,1);
     t->args[0]=e;
+    t->kind=k;
     return t;
 }
 
@@ -60,7 +62,9 @@ void printtype(struct type *t) {
             printf("%s_%d",t->name,t->index);
             break;
         case TYPE_POLY:
-            printf("\\/%s.",t->name);
+            printf("\\/%s:",t->name);
+            printkind(t->kind);
+            putchar('.');
             printtype(t->args[0]);
             break;
         case TYPE_FUNCTION:
@@ -72,7 +76,7 @@ void printtype(struct type *t) {
             break;
         case TYPE_ABSTR:
             printf("\\%s:",t->name);
-            //printkind(t->kind);
+            printkind(t->kind);
             putchar('.');
             if (t->args[0] && t->args[0]->t==TYPE_APPL) putchar('(');
             printtype(t->args[0]);
@@ -102,10 +106,13 @@ struct type *duptype(struct type *t) {
             ct->index=t->index;
             break;
         case TYPE_POLY:
+        case TYPE_ABSTR:
             ct->name=strdup(t->name);
+            ct->kind=dupkind(t->kind);
             ct->args[0]=duptype(t->args[0]);
             break;
         case TYPE_FUNCTION:
+        case TYPE_APPL:
         //case TYPE_PAIR:
             ct->args[0]=duptype(t->args[0]);
             ct->args[1]=duptype(t->args[1]);
@@ -146,13 +153,15 @@ void destroytype(struct type *t) {
             free(t->name);
             break;
         case TYPE_FUNCTION:
-        //case TYPE_PAIR:
+        case TYPE_APPL:
             destroytype(t->args[0]);
             destroytype(t->args[1]);
             break;
         case TYPE_POLY:
+        case TYPE_ABSTR:
             free(t->name);
             destroytype(t->args[0]);
+            destroykind(t->kind);
         default: break;
     }
     free(t);

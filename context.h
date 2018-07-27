@@ -25,7 +25,7 @@ struct context context_init();
 int context_addterm(struct context *,char *,struct type *,struct lambda *);
 struct contextrecord *context_findterm(const struct context *const,char *);
 void context_deleteterm(struct context *,char *);
-int context_addtype(struct context *,char *,struct type *);
+int context_addtype(struct context *,char *,struct type *,struct kind *);
 struct typerecord *context_findtype(const struct context *const,char *);
 struct type *fold(struct context *,struct type *);
 void context_deletetype(struct context *,char *);

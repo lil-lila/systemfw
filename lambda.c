@@ -16,7 +16,8 @@ struct lambda *dupnode(struct lambda *l) {
             lc->abstr.overtype=l->abstr.overtype;
             lc->abstr.v=strdup(l->abstr.v);
             lc->abstr.expr=dupnode(l->abstr.expr);
-            lc->abstr.type=duptype(l->abstr.type);
+            if (lc->abstr.overtype) lc->abstr.kind=dupkind(l->abstr.kind);
+            else lc->abstr.type=duptype(l->abstr.type);
             break;
         case LAMBDA_APPL:
             lc->appl.overtype=l->appl.overtype;
@@ -65,7 +66,8 @@ void destroynode(struct lambda *lc) {
             break;
         case LAMBDA_ABSTR:
             free(lc->abstr.v);
-            destroytype(lc->abstr.type);
+            if (lc->abstr.overtype) destroykind(lc->abstr.kind);
+            else destroytype(lc->abstr.type);
             destroynode(lc->abstr.expr);
             break;
         case LAMBDA_APPL:
@@ -87,7 +89,8 @@ void printnode(struct lambda *lc) {
             break;
         case LAMBDA_ABSTR:
             printf("%s%s:",lc->abstr.overtype?"/\\":"\\",lc->abstr.v);
-            printtype(lc->abstr.type);
+            if (lc->abstr.overtype) printkind(lc->abstr.kind);
+            else printtype(lc->abstr.type);
             putchar('.');
             if (lc->abstr.expr->t==LAMBDA_APPL) putchar('(');
             printnode(lc->abstr.expr);
