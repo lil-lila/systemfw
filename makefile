@@ -15,7 +15,7 @@ debug : a.out
 check: a.out
 	echo >>out
 	echo `date` >>out
-	$(VG) $(VGARGS) ./a.out < ts1 >>out
+	$(VG) $(VGARGS) ./a.out < ts >>out
 
 run: a.out
 	./a.out

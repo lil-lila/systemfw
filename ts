@@ -41,4 +41,6 @@ term1=/\a.\x:∀X.X->X.x[a->a] x[a];
 E=/\T.\q:(\/X.X->X)->T.q (/\X.\x:X.x);
 ?=E;
 b=:B->CV;
-?=((\x:B->CV.x) b) (id [B] T)
+?=((\x:B->CV.x) b) (id [B] T);
+:Pair = ∀C:*.(A -> B -> C) -> C;
+:?=Pair;

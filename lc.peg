@@ -62,18 +62,18 @@
 
 #main
 main        <- S:sentence {/*$$=S;*/} (SEP S:sentence {/*$$=S;*/})* SEP?
-sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
-             / ID:ID EQUAL OF T:tterm {context_addterm(&auxil->ctx,ID.s,T.t,NULL); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
+sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l);}
+             / ID:ID EQUAL OF T:tterm {context_addterm(&auxil->ctx,ID.s,T.t,NULL);}
              / _ '?' EQUAL T:term {struct type *t; struct lambda *l;
                                    printf("expr:"); printnode(T.l); putchar('\n');
                                    printf(" type:"); printtype(t=infertype(T.l,&auxil->ctx)); putchar('\n');
                                    printf(" eval:"); printnode(l=eval(T.l,&auxil->ctx)); putchar('\n');
                                    destroynode(l); destroytype(t);/*$$=T;*/}
-             / OF ID:ID EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t,NULL); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
+             / OF ID:ID EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t,NULL);}
              / OF '?' _ EQUAL T:tterm {struct kind *k;
                                        printf("type:"); printtype(T.t); putchar('\n');
                                        printkind(k=inferkind(T.t,&auxil->ctx)); putchar('\n');
-                                       destroykind(k); destroytype(T.t); /*$$=T;*/ /*printcontext(&auxil->ctx);*/}
+                                       destroykind(k); destroytype(T.t);}
 #term
 term        <- (T:application / T:abstraction) {$$=T;}
 abstraction <- LAMBDA ID:ID OF TID:tterm {if (indexof(&auxil->db,ID.s) || context_findterm(&auxil->ctx,ID.s)) PCC_ERROR(auxil); debruijn_push(&auxil->db,ID.s);}
@@ -116,7 +116,7 @@ atom        <- ID:ID {
              / LP T:term RP {$$=T;}
 #kind
 kind        <- TA:katom {$$=TA;} (ARROW S:kind {$$.k=kind_function($$.k,S.k);})?
-katom       <- TU:UKIND {$$.k=mkkind(KIND_PROP,0);}
+katom       <- UKIND {$$.k=mkkind(KIND_PROP,0);}
              / LP TT:kind RP {$$=TT;}
 #type
 tterm       <- (T:tarrow / T:tabstr) {$$=T;}

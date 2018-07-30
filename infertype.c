@@ -5,20 +5,47 @@
 #include "unify.h"
 #include "lambda.h"
 
+struct type *typeshift(struct type *where,int with,int atindex) {
+    if (!where) return NULL;
+    switch(where->t) {
+        case TYPE_NAME:
+        case TYPE_VARIABLE:
+            if (where->index>atindex) {
+                where->index+=with;
+            }
+            return where;
+        case TYPE_APPL:
+        case TYPE_FUNCTION:
+            where->args[0]=typeshift(where->args[0],with,atindex);
+            where->args[1]=typeshift(where->args[1],with,atindex);
+            return where;
+        case TYPE_ABSTR:
+        case TYPE_POLY: {
+            int ni=((where->t==TYPE_POLY)?0:1);
+            where->args[0]=typeshift(where->args[0],with+ni,atindex+ni);
+            return where;
+        }
+        default: break;
+    };
+    return where;
+}
+
 struct type *subtype(struct type *where,struct type *with,int atindex) {
     if (!where || !with) return NULL;
     switch(where->t) {
         case TYPE_NAME:
             if (where->index==atindex) {
                 destroytype(where);
-                return duptype(with);
+                return typeshift(duptype(with),atindex-1,0);
             } else return where;
         case TYPE_FUNCTION:
+        case TYPE_APPL:
             where->args[0]=subtype(where->args[0],with,atindex);
             where->args[1]=subtype(where->args[1],with,atindex);
             return where;
         case TYPE_POLY:
-            where->args[0]=subtype(where->args[0],with,atindex+1);
+        case TYPE_ABSTR:
+            where->args[0]=subtype(where->args[0],with+((where->t==TYPE_POLY)?0:1),atindex+1);
             return where;
         default: break;
     }

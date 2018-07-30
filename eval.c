@@ -20,11 +20,11 @@ struct lambda *shift(struct lambda *where,int with,int atindex) {
                 where->appl.rhs.l=shift(where->appl.rhs.l,with,atindex);
             // else do nothing;
             return where;
-            break;
-        case LAMBDA_ABSTR:
-            where->abstr.expr=shift(where->abstr.expr,with+1,atindex+(where->abstr.overtype?0:1));
+        case LAMBDA_ABSTR: {
+            int ni=(where->abstr.overtype?0:1);
+            where->abstr.expr=shift(where->abstr.expr,with+ni,atindex+ni);
             return where;
-            break;
+        }
         default:
             break;
     };
