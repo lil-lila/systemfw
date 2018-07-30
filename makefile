@@ -20,6 +20,9 @@ check: a.out
 run: a.out
 	./a.out
 
+int: a.out
+	$(VG) $(VGARGS) ./a.out
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 

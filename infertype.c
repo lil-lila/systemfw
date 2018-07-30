@@ -22,7 +22,7 @@ struct type *typeshift(struct type *where,int with,int atindex) {
         case TYPE_ABSTR:
         case TYPE_POLY: {
             int ni=((where->t==TYPE_POLY)?0:1);
-            where->args[0]=typeshift(where->args[0],with+ni,atindex+ni);
+            where->args[0]=typeshift(where->args[0],with+ni,atindex+1);
             return where;
         }
         default: break;
@@ -45,7 +45,7 @@ struct type *subtype(struct type *where,struct type *with,int atindex) {
             return where;
         case TYPE_POLY:
         case TYPE_ABSTR:
-            where->args[0]=subtype(where->args[0],with+((where->t==TYPE_POLY)?0:1),atindex+1);
+            where->args[0]=subtype(where->args[0],with,atindex+1);
             return where;
         default: break;
     }
@@ -65,9 +65,11 @@ struct type *expandtype(struct type *lc,const struct context *const D) {
             }
             break;
         case TYPE_POLY:
+        case TYPE_ABSTR:
             lc->args[0]=expandtype(lc->args[0],D);
             break;
         case TYPE_FUNCTION:
+        case TYPE_APPL:
             lc->args[0]=expandtype(lc->args[0],D);
             lc->args[1]=expandtype(lc->args[1],D);
             break;
@@ -75,6 +77,57 @@ struct type *expandtype(struct type *lc,const struct context *const D) {
             break;
     }
     return lc;
+}
+
+struct type *typebeta(struct type *l) {
+    if (!l) return NULL;
+    if (l->t==TYPE_APPL) {
+        if (l->args[0] && l->args[0]->t==TYPE_ABSTR) {
+            struct type *lhs_expr=l->args[0]->args[0];
+            struct type *rhs=l->args[1];
+            //printf("beta: expr lhs"); printtype(lhs_expr);
+            //printf("\nrhs:"); printtype(rhs); putchar('\n');
+            free(l->args[0]->name);
+            destroykind(l->args[0]->kind);
+            free(l->args[0]);
+            free(l);
+            l = typeshift(subtype(lhs_expr, rhs, 1),-1,1);
+            destroytype(rhs);
+        }
+    }
+    return l;
+}
+
+struct type *evaltype(struct type *l,const struct context *const D) {
+    if (!l) return NULL;
+    switch(l->t) {
+        case TYPE_NAME:
+            l=expandtype(l,D);
+            break;
+        case TYPE_POLY:
+        case TYPE_ABSTR: {
+            l->args[0]=evaltype(l->args[0],D);
+            break;
+        }
+        case TYPE_APPL: {
+            struct type *old_l=l;
+            l->args[0]=evaltype(l->args[0],D);
+            l=typebeta(l);
+            if (old_l==l) {
+                l->args[0]=evaltype(l->args[0],D);
+                l->args[1]=evaltype(l->args[1],D);
+            } else {
+                l=evaltype(l,D);
+            }
+            break;
+        }
+        case TYPE_FUNCTION:
+            l->args[0]=evaltype(l->args[0],D);
+            l->args[1]=evaltype(l->args[1],D);
+            break;
+        default: return NULL;
+    }
+    return l;
 }
 
 struct type *infertype(struct lambda *l,struct context *D) {
@@ -85,7 +138,8 @@ struct type *infertype(struct lambda *l,struct context *D) {
             struct contextrecord *r = context_findterm(D,l->atom.s);
             if (!r) return NULL;
             if (!r->t) r->t=expandtype(infertype(r->expr,D),D);
-            return duptype(r->t);
+            struct type *s=evaltype(duptype(r->t),D);
+            return s;
         }
         case LAMBDA_ABSTR: {
             if (l->abstr.overtype) { // /\a:*.T:B : \/a.B

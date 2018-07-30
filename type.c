@@ -17,6 +17,7 @@ struct type *mktype(enum ttype type,char *name,int arity/*,struct type **args*/)
 
 struct type *type_function(struct type *in,struct type *out) {
     struct type *t=mktype(TYPE_FUNCTION,NULL,2);
+    if (!t) return NULL;
     t->args[0]=in;
     t->args[1]=out;
     return t;
@@ -24,6 +25,7 @@ struct type *type_function(struct type *in,struct type *out) {
 
 struct type *type_appl(struct type *in,struct type *out) {
     struct type *t=mktype(TYPE_APPL,NULL,2);
+    if (!t) return NULL;
     t->args[0]=in;
     t->args[1]=out;
     return t;
@@ -36,6 +38,7 @@ struct type *type_var(char *name) {
 
 struct type *type_poly(char *name,struct type *e,struct kind *k) {
     struct type *t=mktype(TYPE_POLY,name,1);
+    if (!t) return NULL;
     t->args[0]=e;
     t->kind=k;
     return t;
@@ -43,6 +46,7 @@ struct type *type_poly(char *name,struct type *e,struct kind *k) {
 
 struct type *type_abstr(char *name,struct type *e,struct kind *k) {
     struct type *t=mktype(TYPE_ABSTR,name,1);
+    if (!t) return NULL;
     t->args[0]=e;
     t->kind=k;
     return t;
@@ -113,7 +117,6 @@ struct type *duptype(struct type *t) {
             break;
         case TYPE_FUNCTION:
         case TYPE_APPL:
-        //case TYPE_PAIR:
             ct->args[0]=duptype(t->args[0]);
             ct->args[1]=duptype(t->args[1]);
             break;
