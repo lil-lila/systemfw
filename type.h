@@ -8,15 +8,11 @@ enum ttype {
     /* type variable */
     TYPE_VARIABLE,
     /* type operator */
-    /*TYPE_INTEGER, //arity = 0
-    TYPE_BOOLEAN,
-    TYPE_STRING,*/
     TYPE_POLY, //over type with name 'name'
     TYPE_NAME,
     TYPE_FUNCTION, //arity = 2
     TYPE_APPL,
     TYPE_ABSTR
-    //,TYPE_LIST //arity = 1
 };
 
 struct type {

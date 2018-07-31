@@ -85,8 +85,6 @@ struct type *typebeta(struct type *l) {
         if (l->args[0] && l->args[0]->t==TYPE_ABSTR) {
             struct type *lhs_expr=l->args[0]->args[0];
             struct type *rhs=l->args[1];
-            //printf("beta: expr lhs"); printtype(lhs_expr);
-            //printf("\nrhs:"); printtype(rhs); putchar('\n');
             free(l->args[0]->name);
             destroykind(l->args[0]->kind);
             free(l->args[0]);
@@ -132,7 +130,6 @@ struct type *evaltype(struct type *l,const struct context *const D) {
 
 struct type *infertype(struct lambda *l,struct context *D) {
     if (!l) return NULL;
-    //printf("   TN:"); printnode(l); putchar('\n');
     switch(l->t) {
         case LAMBDA_ATOM: {
             struct contextrecord *r = context_findterm(D,l->atom.s);
@@ -205,7 +202,6 @@ struct type *infertype(struct lambda *l,struct context *D) {
                 destroytype(rhst);
                 free(tf);
                 free(result);
-                //printf("result: %d\n",r);
                 return t;
             }
         }

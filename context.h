@@ -6,7 +6,6 @@
 #include "lambda.h"
 
 struct context {
-    //int size,typesize;
     struct contextrecord {
         char *name;
         struct type *t;

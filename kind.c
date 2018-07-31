@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "kind.h"
 
-struct kind *mkkind(enum tkind kind,int arity/*,struct kind **args*/) {
+struct kind *mkkind(enum tkind kind,int arity) {
     struct kind *t=(struct kind *)malloc(sizeof(struct kind));
     if (!t) return NULL;
     t->t=kind;
@@ -88,25 +88,3 @@ struct kind *dupkind(struct kind *t) {
     }
     return nt;
 }
-/*int destroyterm(struct kind *t) {
-    free(t->name);
-    for (int i=0;i<t->arity;i++) destroyterm(t->args[i]);
-    free(t->args);
-    free(t);
-    return 0;
-}
-
-void printterm_(struct kind *t) {
-    printf("%s",t->name);
-    if (t->arity!=0) {
-        printf("(");
-        printterm_(t->args[0]);
-        for (int i=1;i<t->arity;i++) {printf(","); printterm_(t->args[i]);}
-        printf(")");
-    }
-}
-
-void printterm(struct kind *t) {
-    printterm_(t);
-    printf("\n");
-}*/

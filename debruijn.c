@@ -18,9 +18,7 @@ int debruijn_push(struct debruijn *s,const char *const c) {
     if (!s->count || !s->terms) s->terms=(char const **)malloc((s->count=1)*sizeof(char *));
     else s->terms=(char const **)realloc(s->terms,++s->count*sizeof(char *));
     if (!s->terms) return -1;
-    s->terms[s->count-1]=c;//(char *)malloc((strlen(c)+1)*sizeof(char));
-    /*if (!s->term[s->count-1]) return -1;
-    strcpy(s->term[s->count-1],c);*/
+    s->terms[s->count-1]=c;
     return s->count-1;
 }
 

@@ -1,5 +1,5 @@
 /* implementation of unify algorithm,              */
-/* adopted for type unify for (HM) system F        */
+/* adopted for type unify for system F             */
 /* see http://arxiv.org/abs/cs/0603080 for details */
 
 #include <stdbool.h>

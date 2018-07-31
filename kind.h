@@ -7,12 +7,8 @@ enum tkind {
     /* kind variable */
     KIND_VARIABLE,
     /* kind operator */
-    /*kind_INTEGER, //arity = 0
-    kind_BOOLEAN,
-    kind_STRING,*/
     KIND_PROP,
     KIND_FUNCTION, //arity = 2
-    //,kind_LIST //arity = 1
 };
 
 struct kind {

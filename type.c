@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "type.h"
 
-struct type *mktype(enum ttype type,char *name,int arity/*,struct type **args*/) {
+struct type *mktype(enum ttype type,char *name,int arity) {
     struct type *t=(struct type *)malloc(sizeof(struct type));
     if (!t) return NULL;
     t->t=type;
@@ -169,25 +169,3 @@ void destroytype(struct type *t) {
     }
     free(t);
 }
-/*int destroyterm(struct type *t) {
-    free(t->name);
-    for (int i=0;i<t->arity;i++) destroyterm(t->args[i]);
-    free(t->args);
-    free(t);
-    return 0;
-}
-
-void printterm_(struct type *t) {
-    printf("%s",t->name);
-    if (t->arity!=0) {
-        printf("(");
-        printterm_(t->args[0]);
-        for (int i=1;i<t->arity;i++) {printf(","); printterm_(t->args[i]);}
-        printf(")");
-    }
-}
-
-void printterm(struct type *t) {
-    printterm_(t);
-    printf("\n");
-}*/

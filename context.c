@@ -7,8 +7,6 @@
 
 struct context context_init() {
     struct context c;
-    //c.size=0;
-    //c.typesize=0;
     c.termlist=NULL;
     c.typelist=NULL;
     return c;
