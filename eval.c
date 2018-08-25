@@ -149,17 +149,11 @@ struct lambda *eval(struct lambda *l,const struct context *const D) {
                     free(l);
                     l=lhs_expr;
                 }
-            } else {
-                l=beta(l);
-                if (old_l!=l) l=eval(l,D);
-                else l->appl.rhs.l=eval(l->appl.rhs.l,D);
-            }
+            } else l=beta(l);
             if (old_l==l) { //keine beta-reduction
                 l->appl.lhs=eval(l->appl.lhs,D);
                 if (!l->appl.overtype) l->appl.rhs.l=eval(l->appl.rhs.l,D);
-            } else {
-                l=eval(l,D);
-            }
+            } else l=eval(l,D);
             break;
         }
         default: return NULL;

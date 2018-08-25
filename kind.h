@@ -6,8 +6,8 @@
 enum tkind {
     /* kind variable */
     KIND_VARIABLE,
-    /* kind operator */
     KIND_PROP,
+    /* kind operator */
     KIND_FUNCTION, //arity = 2
 };
 
@@ -19,7 +19,7 @@ struct kind {
 
 struct kind *mkkind(enum tkind,int);
 struct kind *kind_function(struct kind *,struct kind *);
-struct kind *kind_var();
+//struct kind *kind_var();
 void printkind(struct kind *);
 bool cmpkind(struct kind *,struct kind *);
 struct kind *dupkind(struct kind *);

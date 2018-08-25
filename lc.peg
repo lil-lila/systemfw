@@ -68,7 +68,9 @@ sentence    <- ID:ID EQUAL T:term {context_addterm(&auxil->ctx,ID.s,NULL,T.l);}
                                    printf("expr:"); printnode(T.l); putchar('\n');
                                    printf(" type:"); printtype(t=infertype(T.l,&auxil->ctx)); putchar('\n');
                                    printf(" eval:"); printnode(l=eval(T.l,&auxil->ctx)); putchar('\n');
-                                   destroynode(l); destroytype(t);/*$$=T;*/}
+                                   destroynode(l);
+                                   destroytype(t);/*$$=T;*/
+                                  }
              / OF ID:ID EQUAL T:tterm {context_addtype(&auxil->ctx,ID.s,T.t,NULL);}
              / OF '?' _ EQUAL T:tterm {struct kind *k; struct type *t;
                                        printf("type:"); printtype(T.t); putchar('\n');

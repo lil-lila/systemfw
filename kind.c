@@ -19,10 +19,10 @@ struct kind *kind_function(struct kind *in,struct kind *out) {
     return t;
 }
 
-struct kind *kind_var() {
+/*struct kind *kind_var() {
     struct kind *t=mkkind(KIND_VARIABLE,0);
     return t;
-}
+}*/
 
 void printkind(struct kind *t) {
     if (!t) {printf("<implicit>"); return;}

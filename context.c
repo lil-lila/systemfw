@@ -28,6 +28,7 @@ int context_addterm(struct context *c,char *n,struct type *t,struct lambda *l) {
 }
 
 struct contextrecord *context_findterm(const struct context *const c,char *name) {
+    if (!name) return NULL;
     struct contextrecord *r;
     if (!(r=c->termlist)) return NULL;
     while (r && strcmp(r->name,name)) r=r->prev;
@@ -86,6 +87,7 @@ int context_addtype(struct context *c,char *n,struct type *t,struct kind *k) {
 }
 
 struct typerecord *context_findtype(const struct context *const c,char *name) {
+    if (!name) return NULL;
     struct typerecord *r;
     if (!(r=c->typelist)) return NULL;
     while (r && strcmp(r->name,name)) r=r->prev;
